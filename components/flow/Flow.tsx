@@ -142,7 +142,7 @@ export default function Flow({
     }
 
     return { incomeNode, bucketNodes, inLinks, outLinks, potNodes };
-  }, [earned, buckets, transfers, pots]);
+  }, [buckets, transfers, pots]);
 
   return (
     <section className="rounded-card bg-surface p-6 ring-1 ring-edge">

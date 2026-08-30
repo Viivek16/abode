@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { rupee, compact } from "@/lib/format";
+import { rupee } from "@/lib/format";
 import { useUpcoming, type LineItem } from "@/lib/hooks/useUpcoming";
 
 function Section({

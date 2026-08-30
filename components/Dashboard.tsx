@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import NetWorthHero from "@/components/hero/NetWorthHero";
 import StatTrio from "@/components/stats/StatTrio";
@@ -22,22 +22,17 @@ import { currentYm, deriveMonth, netWorth, shiftYm } from "@/lib/logic";
 import type { BucketKey } from "@/lib/types";
 
 export default function Dashboard() {
-  const [ym, setYm] = useState(currentYm());
+  const [picked, setPicked] = useState<string | null>(null);
   const [selected, setSelected] = useState<BucketKey | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const [landed, setLanded] = useState(false);
+
+  const { data: incomeMonths } = useIncomeMonths();
+  // Default to the latest month that has income; an explicit pick takes over once made.
+  const ym = picked ?? incomeMonths?.[incomeMonths.length - 1] ?? currentYm();
 
   const { data } = useDashboardData(ym);
-  const { data: incomeMonths } = useIncomeMonths();
   useRealtime(ym);
   const addEntry = useAddEntry(ym);
-
-  // On first load, if the current month has no income yet, land on the latest month that does.
-  useEffect(() => {
-    if (landed || !incomeMonths?.length) return;
-    if (!incomeMonths.includes(ym)) setYm(incomeMonths[incomeMonths.length - 1]);
-    setLanded(true);
-  }, [incomeMonths, landed, ym]);
 
   const quota = data?.quota ?? [];
   const income = data?.income ?? [];
@@ -65,7 +60,7 @@ export default function Dashboard() {
           </Link>
         </div>
         <div className="flex items-center gap-2">
-          <MonthSwitcher ym={ym} onShift={(d) => setYm(shiftYm(ym, d))} />
+          <MonthSwitcher ym={ym} onShift={(d) => setPicked(shiftYm(ym, d))} />
           <form action="/auth/signout" method="post">
             <button
               type="submit"
