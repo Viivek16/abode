@@ -4,6 +4,7 @@ import { useState } from "react";
 import NetWorthHero from "@/components/hero/NetWorthHero";
 import StatTrio from "@/components/stats/StatTrio";
 import QuotaRings from "@/components/rings/QuotaRings";
+import Flow from "@/components/flow/Flow";
 import PotCards from "@/components/pots/PotCards";
 import MonthSwitcher from "@/components/month-switcher/MonthSwitcher";
 import UpcomingStrip from "@/components/upcoming/UpcomingStrip";
@@ -31,6 +32,7 @@ export default function Dashboard() {
   const income = data?.income ?? [];
   const expenses = data?.expenses ?? [];
   const pots = data?.pots ?? [];
+  const transfers = data?.transfers ?? [];
 
   const { earned, spent, kept, buckets } = deriveMonth(quota, income, expenses);
   const worth = netWorth(pots);
@@ -62,6 +64,14 @@ export default function Dashboard() {
         <NetWorthHero value={worth} prevValue={data?.prevNetWorth ?? null} />
         <StatTrio earned={earned} spent={spent} kept={kept} />
         <QuotaRings buckets={buckets} selected={selected} onSelect={setSelected} />
+        <Flow
+          earned={earned}
+          buckets={buckets}
+          transfers={transfers}
+          pots={pots}
+          selected={selected}
+          onSelect={setSelected}
+        />
         <PotCards pots={pots} />
         <UpcomingStrip />
       </div>

@@ -118,6 +118,17 @@ body {
   color: var(--ink);
 }
 
+/* Slow animated dash so money looks like it is moving along the flow links */
+@keyframes flowdash {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+.flow-link {
+  stroke-dasharray: 6 6;
+  animation: flowdash 1.6s linear infinite;
+}
+
 /* Honor reduced motion: kill transitions + animations */
 @media (prefers-reduced-motion: reduce) {
   *,

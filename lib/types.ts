@@ -42,6 +42,16 @@ export type ExpenseEntry = {
   created_at: string;
 };
 
+export type Transfer = {
+  id: string;
+  entry_date: string;
+  ym: string;
+  pot_id: string | null;
+  quota_key: BucketKey | null;
+  amount: number;
+  created_at: string;
+};
+
 export type PotSnapshot = {
   pot_id: string;
   ym: string;

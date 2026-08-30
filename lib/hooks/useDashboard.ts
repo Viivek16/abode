@@ -13,6 +13,7 @@ import type {
   IncomeEntry,
   Pot,
   QuotaConfig,
+  Transfer,
 } from "@/lib/types";
 
 // One browser client for the whole tab.
@@ -23,6 +24,7 @@ export type DashboardData = {
   quota: QuotaConfig[];
   income: IncomeEntry[];
   expenses: ExpenseEntry[];
+  transfers: Transfer[];
   prevNetWorth: number | null;
 };
 
@@ -30,15 +32,17 @@ const key = (ym: string) => ["dashboard", ym] as const;
 
 async function fetchDashboard(ym: string): Promise<DashboardData> {
   const prevYm = shiftYm(ym, -1);
-  const [pots, quota, income, expenses, prevSnap] = await Promise.all([
+  const [pots, quota, income, expenses, transfers, prevSnap] = await Promise.all([
     supabase.from("pots").select("*").order("is_bank", { ascending: false }).order("name"),
     supabase.from("quota_config").select("*").order("sort"),
     supabase.from("income_entries").select("*").eq("ym", ym),
     supabase.from("expense_entries").select("*").eq("ym", ym).order("created_at", { ascending: false }),
+    supabase.from("transfers").select("*").eq("ym", ym),
     supabase.from("pot_snapshots").select("balance").eq("ym", prevYm),
   ]);
 
-  const err = pots.error || quota.error || income.error || expenses.error;
+  const err =
+    pots.error || quota.error || income.error || expenses.error || transfers.error;
   if (err) throw err;
 
   const prevRows = prevSnap.data ?? [];
@@ -51,6 +55,7 @@ async function fetchDashboard(ym: string): Promise<DashboardData> {
     quota: (quota.data ?? []) as QuotaConfig[],
     income: (income.data ?? []) as IncomeEntry[],
     expenses: (expenses.data ?? []) as ExpenseEntry[],
+    transfers: (transfers.data ?? []) as Transfer[],
     prevNetWorth,
   };
 }
@@ -75,6 +80,9 @@ export function useRealtime(ym: string) {
         qc.invalidateQueries({ queryKey: ["dashboard"] }),
       )
       .on("postgres_changes", { event: "*", schema: "public", table: "pots" }, () =>
+        qc.invalidateQueries({ queryKey: ["dashboard"] }),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "transfers" }, () =>
         qc.invalidateQueries({ queryKey: ["dashboard"] }),
       )
       .subscribe();
