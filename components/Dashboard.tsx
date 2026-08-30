@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import NetWorthHero from "@/components/hero/NetWorthHero";
 import StatTrio from "@/components/stats/StatTrio";
 import QuotaRings from "@/components/rings/QuotaRings";
@@ -56,7 +57,13 @@ export default function Dashboard() {
     <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-5">
       {/* Header */}
       <header className="mb-5 flex items-center justify-between gap-3">
-        <p className="font-display text-lg font-bold text-ink">Abode</p>
+        <div className="flex items-center gap-3">
+          <p className="font-display text-lg font-bold text-ink">Abode</p>
+          <span className="text-xs font-medium text-accent">Dashboard</span>
+          <Link href="/upcoming" className="text-xs text-muted hover:text-ink">
+            Upcoming
+          </Link>
+        </div>
         <div className="flex items-center gap-2">
           <MonthSwitcher ym={ym} onShift={(d) => setYm(shiftYm(ym, d))} />
           <form action="/auth/signout" method="post">

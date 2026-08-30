@@ -6,7 +6,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { supabaseBrowser } from "@/lib/supabase/client";
 import { currentYm, shiftYm } from "@/lib/logic";
 import type {
   ExpenseEntry,
@@ -17,7 +17,7 @@ import type {
 } from "@/lib/types";
 
 // One browser client for the whole tab.
-const supabase = createClient();
+const supabase = supabaseBrowser();
 
 export type DashboardData = {
   pots: Pot[];
