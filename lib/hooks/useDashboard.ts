@@ -67,6 +67,22 @@ export function useDashboardData(ym: string) {
   });
 }
 
+// Distinct months that actually have income, newest last. Used to land on the
+// latest populated month instead of an empty current month.
+export function useIncomeMonths() {
+  return useQuery({
+    queryKey: ["income-months"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("income_entries")
+        .select("ym")
+        .order("ym");
+      if (error) throw error;
+      return [...new Set((data ?? []).map((r) => r.ym as string))].sort();
+    },
+  });
+}
+
 // Invalidate the current month whenever the data changes on any device.
 export function useRealtime(ym: string) {
   const qc = useQueryClient();

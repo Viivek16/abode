@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import NetWorthHero from "@/components/hero/NetWorthHero";
 import StatTrio from "@/components/stats/StatTrio";
 import QuotaRings from "@/components/rings/QuotaRings";
@@ -13,6 +13,7 @@ import Toast from "@/components/ui/Toast";
 import {
   useAddEntry,
   useDashboardData,
+  useIncomeMonths,
   useRealtime,
   type NewEntry,
 } from "@/lib/hooks/useDashboard";
@@ -23,10 +24,19 @@ export default function Dashboard() {
   const [ym, setYm] = useState(currentYm());
   const [selected, setSelected] = useState<BucketKey | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [landed, setLanded] = useState(false);
 
   const { data } = useDashboardData(ym);
+  const { data: incomeMonths } = useIncomeMonths();
   useRealtime(ym);
   const addEntry = useAddEntry(ym);
+
+  // On first load, if the current month has no income yet, land on the latest month that does.
+  useEffect(() => {
+    if (landed || !incomeMonths?.length) return;
+    if (!incomeMonths.includes(ym)) setYm(incomeMonths[incomeMonths.length - 1]);
+    setLanded(true);
+  }, [incomeMonths, landed, ym]);
 
   const quota = data?.quota ?? [];
   const income = data?.income ?? [];
