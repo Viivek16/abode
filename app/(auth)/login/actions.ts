@@ -1,32 +1,33 @@
 "use server";
 
-import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-export type LoginState = { error?: string; sent?: boolean };
+export type LoginState = { error?: string };
 
-export async function sendMagicLink(
+export async function signIn(
   _prev: LoginState,
   formData: FormData,
 ): Promise<LoginState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
   const admin = (process.env.ADMIN_EMAIL ?? "").trim().toLowerCase();
 
-  if (!email) return { error: "Enter your email." };
-  // Owner-only: never even send a link to a non-owner address.
+  if (!email || !password) return { error: "Enter your email and password." };
+  // Owner-only.
   if (email !== admin) return { error: "This address is not allowed." };
 
   const supabase = await createClient();
-  const origin = (await headers()).get("origin") ?? "";
-
-  const { error } = await supabase.auth.signInWithOtp({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
-    options: {
-      shouldCreateUser: true,
-      emailRedirectTo: `${origin}/auth/confirm`,
-    },
+    password,
   });
 
   if (error) return { error: error.message };
-  return { sent: true };
+  if ((data.user?.email ?? "").toLowerCase() !== admin) {
+    await supabase.auth.signOut();
+    return { error: "This address is not allowed." };
+  }
+
+  redirect("/");
 }
