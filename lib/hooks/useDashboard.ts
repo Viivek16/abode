@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { currentYm, shiftYm } from "@/lib/logic";
+import { dateForYm, shiftYm } from "@/lib/logic";
 import type {
   ExpenseEntry,
   IncomeEntry,
@@ -83,6 +83,25 @@ export function useIncomeMonths() {
   });
 }
 
+// Total income per month across all history, for the income heatmap.
+export function useMonthlyIncome() {
+  return useQuery({
+    queryKey: ["monthly-income"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("income_entries")
+        .select("ym, amount");
+      if (error) throw error;
+      const by = new Map<string, number>();
+      for (const r of data ?? [])
+        by.set(r.ym as string, (by.get(r.ym as string) ?? 0) + Number(r.amount));
+      return [...by.entries()]
+        .map(([ym, value]) => ({ ym, value }))
+        .sort((a, b) => (a.ym < b.ym ? -1 : 1));
+    },
+  });
+}
+
 // Invalidate the current month whenever the data changes on any device.
 export function useRealtime(ym: string) {
   const qc = useQueryClient();
@@ -108,10 +127,6 @@ export function useRealtime(ym: string) {
   }, [qc, ym]);
 }
 
-// Date that falls inside the selected month, so the RPC derives the right ym.
-const dateForYm = (ym: string) =>
-  ym === currentYm() ? new Date().toISOString().slice(0, 10) : `${ym}-01`;
-
 export type NewEntry = {
   kind: "expense" | "income";
   amount: number;
@@ -119,6 +134,7 @@ export type NewEntry = {
   category?: string;
   source?: string; // income
   note?: string;
+  ym?: string; // target month; defaults to the displayed month (backdating)
 };
 
 export function useAddEntry(ym: string) {
@@ -126,7 +142,7 @@ export function useAddEntry(ym: string) {
 
   return useMutation({
     mutationFn: async (e: NewEntry) => {
-      const p_date = dateForYm(ym);
+      const p_date = dateForYm(e.ym ?? ym);
       if (e.kind === "expense") {
         const { error } = await supabase.rpc("add_expense", {
           p_amount: e.amount,
@@ -149,7 +165,10 @@ export function useAddEntry(ym: string) {
     },
 
     // Optimistic: reflect the change immediately so numbers animate before the round-trip.
+    // Only patch when the entry lands on the displayed month; a backdated entry
+    // for another month just refreshes on settle.
     onMutate: async (e) => {
+      if ((e.ym ?? ym) !== ym) return {};
       await qc.cancelQueries({ queryKey: key(ym) });
       const prev = qc.getQueryData<DashboardData>(key(ym));
       if (prev) {
@@ -204,8 +223,22 @@ export function useAddEntry(ym: string) {
       if (ctx?.prev) qc.setQueryData(key(ym), ctx.prev);
     },
 
+    // Mirror income into the Google Sheet (fire-and-forget; sheet lags the app).
+    onSuccess: (_data, e) => {
+      if (e.kind !== "income") return; // expenses: deferred to the next phase
+      const targetYm = e.ym ?? ym;
+      fetch("/api/sheet/push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ym: targetYm }),
+      }).catch(() => {});
+    },
+
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: key(ym) });
+      // Refresh every cached month (the target may differ from the displayed one)
+      // and the month list, so a backdated entry surfaces when switched to.
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["income-months"] });
     },
   });
 }

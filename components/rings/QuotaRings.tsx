@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { compact } from "@/lib/format";
 import type { BucketView, BucketKey } from "@/lib/types";
 
-const SIZE = 220;
+const SIZE = 240;
 const C = SIZE / 2;
-const RADII = [94, 76, 58, 40]; // outer → inner
+const RADII = [104, 84, 64, 44]; // outer → inner; inner radius sized to clear the center label
 const STROKE = 12;
 
 function Ring({
@@ -65,8 +65,8 @@ export default function QuotaRings({
   const totalAlloc = buckets.reduce((s, b) => s + b.allocated, 0);
 
   return (
-    <section className="rounded-card bg-surface p-6 ring-1 ring-edge">
-      <p className="eyebrow mb-4">Quota buckets</p>
+    <section className="glass p-6">
+      <p className="eyebrow mb-5">Quota buckets</p>
       <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:gap-8">
         {/* Rings */}
         <div className="relative shrink-0" style={{ width: SIZE, height: SIZE }}>
@@ -83,12 +83,14 @@ export default function QuotaRings({
               />
             ))}
           </svg>
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-1 text-center leading-tight">
             <span className="eyebrow">Spent</span>
-            <span className="font-display tnum mt-0.5 text-lg font-bold text-ink">
+            <span className="font-display tnum mt-1 text-xl font-bold text-ink">
               {compact(totalSpent)}
             </span>
-            <span className="tnum text-xs text-muted">of {compact(totalAlloc)}</span>
+            <span className="tnum mt-0.5 text-[11px] text-muted">
+              of {compact(totalAlloc)}
+            </span>
           </div>
         </div>
 

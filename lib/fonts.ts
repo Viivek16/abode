@@ -1,14 +1,16 @@
-import { Gabarito, Sora } from "next/font/google";
+import { Fraunces, Sora } from "next/font/google";
 
-// Gabarito (display): large numbers, primary buttons, big headings only.
-export const display = Gabarito({
+// Fraunces (display): a soft, high-end serif for the hero figures and headings.
+// Optical-size aware, with tabular figures so counting numbers stay aligned.
+export const display = Fraunces({
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
-  variable: "--font-gabarito",
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-fraunces",
   display: "swap",
 });
 
-// Sora (body): every label, list, value, and piece of readable text.
+// Sora (body): every label, value, button, and piece of readable text.
 export const body = Sora({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],

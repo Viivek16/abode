@@ -5,14 +5,14 @@ import { compact } from "@/lib/format";
 import type { BucketKey, BucketView, Pot, Transfer } from "@/lib/types";
 
 const W = 640;
-const H = 340;
-const TOP = 24;
+const H = 360;
+const TOP = 34; // headroom so the "In ₹X" label clears the top edge
 const AVAIL = H - TOP * 2;
-const NODE = 13;
-const GAP = 10;
-const INCOME_X = 10;
+const NODE = 14;
+const GAP = 12;
+const INCOME_X = 14;
 const BUCKET_X = W / 2 - NODE / 2;
-const POT_X = W - NODE - 10;
+const POT_X = W - NODE - 14; // right gutter so pot labels never clip
 
 type Link = {
   d: string;
@@ -145,8 +145,8 @@ export default function Flow({
   }, [buckets, transfers, pots]);
 
   return (
-    <section className="rounded-card bg-surface p-6 ring-1 ring-edge">
-      <p className="eyebrow mb-4">The flow</p>
+    <section className="glass p-6">
+      <p className="eyebrow mb-5">The flow</p>
 
       {!layout ? (
         <p className="py-10 text-center text-sm text-faint">
@@ -201,7 +201,7 @@ export default function Flow({
               rx={4}
               fill="var(--accent)"
             />
-            <text x={INCOME_X} y={layout.incomeNode.y - 8} className="tnum" fill="var(--muted)" fontSize="11">
+            <text x={INCOME_X} y={layout.incomeNode.y - 10} className="tnum" fill="var(--muted)" fontSize="12">
               In {compact(earned)}
             </text>
 
@@ -216,10 +216,10 @@ export default function Flow({
                 >
                   <rect x={BUCKET_X} y={bn.y} width={NODE} height={bn.h} rx={4} fill={bn.b.color} />
                   <text
-                    x={BUCKET_X + NODE + 6}
-                    y={bn.y + bn.h / 2 + 3}
+                    x={BUCKET_X + NODE + 7}
+                    y={bn.y + bn.h / 2 + 4}
                     fill="var(--ink)"
-                    fontSize="10"
+                    fontSize="12"
                   >
                     {bn.b.name.replace(/ \(.*/, "")}
                   </text>
@@ -232,11 +232,11 @@ export default function Flow({
               <g key={`pot-${i}`}>
                 <rect x={POT_X} y={pn.y} width={NODE} height={pn.h} rx={4} fill={pn.color} />
                 <text
-                  x={POT_X - 6}
-                  y={pn.y + pn.h / 2 + 3}
+                  x={POT_X - 7}
+                  y={pn.y + pn.h / 2 + 4}
                   textAnchor="end"
                   fill="var(--muted)"
-                  fontSize="10"
+                  fontSize="12"
                 >
                   {pn.name}
                 </text>

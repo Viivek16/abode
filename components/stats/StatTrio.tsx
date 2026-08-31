@@ -1,7 +1,7 @@
 "use client";
 
 import CountUp from "@/components/ui/CountUp";
-import { rupee } from "@/lib/format";
+import { compact } from "@/lib/format";
 
 function Stat({
   label,
@@ -13,12 +13,12 @@ function Stat({
   tone: string;
 }) {
   return (
-    <div className="rounded-card bg-surface p-4 ring-1 ring-edge">
+    <div className="glass p-4">
       <p className="eyebrow">{label}</p>
       <CountUp
         value={value}
-        format={rupee}
-        className={`font-display mt-1.5 block text-xl font-bold ${tone}`}
+        format={compact}
+        className={`font-display mt-2 block whitespace-nowrap text-xl font-semibold ${tone}`}
       />
     </div>
   );

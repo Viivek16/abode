@@ -5,7 +5,7 @@ export default function UpcomingStrip() {
   return (
     <Link
       href="/upcoming"
-      className="block rounded-card bg-surface p-5 ring-1 ring-edge transition-colors hover:bg-surface-2"
+      className="glass block p-5 transition-colors hover:border-edge-strong"
     >
       <div className="flex items-center justify-between">
         <p className="eyebrow">Upcoming</p>

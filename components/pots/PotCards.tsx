@@ -14,7 +14,7 @@ export default function PotCards({ pots }: { pots: Pot[] }) {
           return (
             <div
               key={p.id}
-              className="relative overflow-hidden rounded-card bg-surface p-4 ring-1 ring-edge"
+              className="glass relative overflow-hidden p-4 transition-transform duration-200 hover:-translate-y-0.5"
             >
               <span
                 className="absolute inset-x-0 top-0 h-1"

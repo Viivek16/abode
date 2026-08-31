@@ -1,12 +1,17 @@
 @import "tailwindcss";
 
-/* ---- Design tokens (locked, Section 3) ---- */
+/* ============================================================
+   Abode — warm liquid-glass design system
+   Warm-dark base, honey-gold accent, Fraunces + Sora.
+   ============================================================ */
 :root {
   /* surfaces */
-  --bg: #14100E;          /* warm near-black, app background */
+  --bg: #14100E;          /* warm near-black */
+  --bg-2: #1A1512;        /* raised base for layering */
   --surface: #1E1714;     /* cards */
   --surface-2: #271D18;   /* nested surfaces, tracks */
   --edge: rgba(255, 255, 255, 0.08);
+  --edge-strong: rgba(255, 255, 255, 0.14);
 
   /* text */
   --ink: #F3ECE6;
@@ -16,6 +21,7 @@
   /* brand */
   --accent: #CDA349;      /* honey-gold */
   --accent-soft: #E0BE73;
+  --accent-deep: #A9812F;
   --positive: #8FB3A3;    /* sage, gains */
   --negative: #CE8A7E;    /* dusty rose, losses */
 
@@ -25,23 +31,33 @@
   --bucket-personal: #B487AE;
   --bucket-emergency: #CBA35C;
 
+  /* glass material */
+  --glass-hi: rgba(255, 255, 255, 0.05);   /* inset top highlight */
+  --glass-line: rgba(255, 255, 255, 0.10); /* hairline border */
+  --shadow-1: 0 1px 0 0 var(--glass-hi) inset,
+              0 18px 40px -26px rgba(0, 0, 0, 0.75);
+  --shadow-2: 0 1px 0 0 var(--glass-hi) inset,
+              0 30px 60px -30px rgba(0, 0, 0, 0.85);
+
   /* radii */
-  --r-card: 20px;
+  --r-card: 22px;
   --r-button: 13px;
   --r-pill: 999px;
 }
 
-/* Map tokens into Tailwind's theme so utilities like bg-surface, text-accent, rounded-card work */
 @theme inline {
   --color-bg: var(--bg);
+  --color-bg-2: var(--bg-2);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-edge: var(--edge);
+  --color-edge-strong: var(--edge-strong);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-faint: var(--faint);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-accent-deep: var(--accent-deep);
   --color-positive: var(--positive);
   --color-negative: var(--negative);
   --color-bucket-bills: var(--bucket-bills);
@@ -53,7 +69,7 @@
   --radius-button: var(--r-button);
   --radius-pill: var(--r-pill);
 
-  --font-display: var(--font-gabarito), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
   --font-body: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -67,50 +83,114 @@ html {
 }
 
 body {
-  background: var(--bg);
+  min-height: 100%;
   color: var(--ink);
   font-family: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  /* atmosphere: a soft honey aurora at the top over the warm base */
+  background:
+    radial-gradient(130% 90% at 50% -20%, rgba(205, 163, 73, 0.10), transparent 55%),
+    radial-gradient(120% 70% at 100% 0%, rgba(140, 147, 199, 0.05), transparent 50%),
+    var(--bg);
+  background-attachment: fixed;
 }
 
-/* Display face for big numbers, buttons, big headings only */
+/* faint film grain so large dark fields never look flat */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Display face: Fraunces, for hero figures + headings only */
 .font-display {
-  font-family: var(--font-gabarito), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  font-feature-settings: "ss01";
 }
 
 /* Tabular figures so digits do not shift while animating */
 .tnum {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum", "lnum";
 }
 
 .eyebrow {
   font-size: 11px;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--muted);
   font-weight: 600;
 }
 
-/* Soft ambient glow behind a card (never on buttons or text) */
+/* ---- Glass card material ---- */
+.glass {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 40%),
+    var(--surface);
+  border: 1px solid var(--glass-line);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-1);
+  backdrop-filter: blur(6px);
+}
+.glass-2 {
+  box-shadow: var(--shadow-2);
+}
+
+/* Soft ambient honey glow behind a hero card (never on buttons or text) */
 .ambient {
   position: relative;
+  isolation: isolate;
 }
 .ambient::before {
   content: "";
   position: absolute;
   inset: -1px;
   border-radius: inherit;
-  background: radial-gradient(120% 80% at 50% 0%, rgba(205, 163, 73, 0.10), transparent 60%);
+  background: radial-gradient(130% 120% at 20% 0%, rgba(205, 163, 73, 0.16), transparent 60%);
   pointer-events: none;
-  z-index: 0;
+  z-index: -1;
+}
+
+/* ---- Motion: entrance reveal (staggered by inline --i) ---- */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px) scale(0.99); }
+  to   { opacity: 1; transform: none; }
+}
+.reveal {
+  opacity: 0;
+  animation: rise 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+/* ---- Skeleton shimmer ---- */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+  border-radius: 10px;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
 }
 
 /* Visible keyboard focus */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 ::selection {
@@ -120,9 +200,7 @@ body {
 
 /* Slow animated dash so money looks like it is moving along the flow links */
 @keyframes flowdash {
-  to {
-    stroke-dashoffset: -32;
-  }
+  to { stroke-dashoffset: -32; }
 }
 .flow-link {
   stroke-dasharray: 6 6;
@@ -139,4 +217,5 @@ body {
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+  .reveal { opacity: 1; }
 }

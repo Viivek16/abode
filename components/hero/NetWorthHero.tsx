@@ -15,15 +15,15 @@ export default function NetWorthHero({
   const up = (delta ?? 0) >= 0;
 
   return (
-    <section className="ambient rounded-card bg-surface p-6 ring-1 ring-edge">
+    <section className="ambient glass glass-2 p-7">
       <div className="relative z-10">
         <p className="eyebrow">Liquid net worth</p>
         <CountUp
           value={value}
           format={rupee}
-          className="font-display mt-2 block text-[clamp(2.75rem,9vw,3.25rem)] font-extrabold leading-none text-accent"
+          className="font-display mt-3 block text-[clamp(2.9rem,10vw,3.9rem)] font-semibold leading-[0.95] tracking-tight text-accent"
         />
-        <div className="mt-3 text-sm">
+        <div className="mt-3.5 text-sm">
           {delta != null ? (
             <span className={up ? "text-positive" : "text-negative"}>
               {signedPct(delta)}{" "}

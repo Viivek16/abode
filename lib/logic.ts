@@ -20,6 +20,11 @@ export function ymLabel(ym: string): string {
   });
 }
 
+// The date to stamp on an entry filed under `ym`: today if that month is the
+// live one, else the first of that month. The Supabase RPC derives `ym` from it.
+export const dateForYm = (ym: string, today = new Date()): string =>
+  ym === ymOf(today) ? today.toISOString().slice(0, 10) : `${ym}-01`;
+
 // ---- Business logic (Section 7) ----
 
 // allocated[b] = round(pct/100 * monthlyIncome)

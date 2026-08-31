@@ -14,8 +14,9 @@ export const EXPENSE_CATEGORIES: { label: string; bucket: BucketKey }[] = [
   { label: "Other", bucket: "personal" },
 ];
 
-// Income source tags (Section 1).
-export const INCOME_CATEGORIES = ["Salary", "Bills", "Investments", "Personal"] as const;
+// Income source tags. "Other" (last) reveals a free-text field for any source
+// not listed here.
+export const INCOME_SOURCES = ["NTC", "Yellow", "Freelancing", "Other"] as const;
 
 // CSS variable per bucket, for inline SVG / dynamic styling.
 export const bucketVar = (key: BucketKey) => `var(--bucket-${key})`;
