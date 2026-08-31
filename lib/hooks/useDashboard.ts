@@ -83,20 +83,27 @@ export function useIncomeMonths() {
   });
 }
 
-// Total income per month across all history, for the income heatmap.
-export function useMonthlyIncome() {
+// Income + spend per month across all history, for the heatmap and its hover.
+export function useMonthlyTotals() {
   return useQuery({
-    queryKey: ["monthly-income"],
+    queryKey: ["monthly-totals"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("income_entries")
-        .select("ym, amount");
-      if (error) throw error;
-      const by = new Map<string, number>();
-      for (const r of data ?? [])
-        by.set(r.ym as string, (by.get(r.ym as string) ?? 0) + Number(r.amount));
-      return [...by.entries()]
-        .map(([ym, value]) => ({ ym, value }))
+      const [inc, exp] = await Promise.all([
+        supabase.from("income_entries").select("ym, amount"),
+        supabase.from("expense_entries").select("ym, amount"),
+      ]);
+      if (inc.error) throw inc.error;
+      if (exp.error) throw exp.error;
+      const m = new Map<string, { income: number; spent: number }>();
+      const bump = (ym: string, k: "income" | "spent", v: number) => {
+        const cur = m.get(ym) ?? { income: 0, spent: 0 };
+        cur[k] += v;
+        m.set(ym, cur);
+      };
+      for (const r of inc.data ?? []) bump(r.ym as string, "income", Number(r.amount));
+      for (const r of exp.data ?? []) bump(r.ym as string, "spent", Number(r.amount));
+      return [...m.entries()]
+        .map(([ym, v]) => ({ ym, income: v.income, spent: v.spent }))
         .sort((a, b) => (a.ym < b.ym ? -1 : 1));
     },
   });
@@ -239,6 +246,41 @@ export function useAddEntry(ym: string) {
       // and the month list, so a backdated entry surfaces when switched to.
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["income-months"] });
+    },
+  });
+}
+
+export type NewTransfer = { pot_id: string; quota_key: string; amount: number };
+
+// Allocate money out of the quotas into pots (the manual distribution step).
+export function useAddTransfers(ym: string) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (transfers: NewTransfer[]) => {
+      const p_date = dateForYm(ym);
+      for (const t of transfers) {
+        const { error } = await supabase.rpc("add_transfer", {
+          p_amount: t.amount,
+          p_pot_id: t.pot_id,
+          p_quota: t.quota_key,
+          p_date,
+        });
+        if (error) throw error;
+      }
+    },
+
+    // Mirror the month's transfers into the sheet's "Transfered to" table.
+    onSuccess: () => {
+      fetch("/api/sheet/push-transfers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ym }),
+      }).catch(() => {});
+    },
+
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }

@@ -153,11 +153,10 @@ export default function Flow({
           Add income for this month to see the waterfall.
         </p>
       ) : (
-        <div className="overflow-x-auto">
+        <div>
           <svg
             viewBox={`0 0 ${W} ${H}`}
             className="w-full"
-            style={{ minWidth: 480 }}
             role="img"
             aria-label="Money flow from income into quota buckets and pots"
           >
@@ -201,7 +200,7 @@ export default function Flow({
               rx={4}
               fill="var(--accent)"
             />
-            <text x={INCOME_X} y={layout.incomeNode.y - 10} className="tnum" fill="var(--muted)" fontSize="12">
+            <text x={INCOME_X} y={layout.incomeNode.y - 10} className="tnum" fill="var(--muted)" fontSize="15">
               In {compact(earned)}
             </text>
 
@@ -216,10 +215,10 @@ export default function Flow({
                 >
                   <rect x={BUCKET_X} y={bn.y} width={NODE} height={bn.h} rx={4} fill={bn.b.color} />
                   <text
-                    x={BUCKET_X + NODE + 7}
-                    y={bn.y + bn.h / 2 + 4}
+                    x={BUCKET_X + NODE + 8}
+                    y={bn.y + bn.h / 2 + 5}
                     fill="var(--ink)"
-                    fontSize="12"
+                    fontSize="17"
                   >
                     {bn.b.name.replace(/ \(.*/, "")}
                   </text>
@@ -232,11 +231,11 @@ export default function Flow({
               <g key={`pot-${i}`}>
                 <rect x={POT_X} y={pn.y} width={NODE} height={pn.h} rx={4} fill={pn.color} />
                 <text
-                  x={POT_X - 7}
-                  y={pn.y + pn.h / 2 + 4}
+                  x={POT_X - 8}
+                  y={pn.y + pn.h / 2 + 5}
                   textAnchor="end"
                   fill="var(--muted)"
-                  fontSize="12"
+                  fontSize="16"
                 >
                   {pn.name}
                 </text>

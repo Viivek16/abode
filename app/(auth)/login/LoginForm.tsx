@@ -20,7 +20,7 @@ export default function LoginForm({ notice }: { notice?: string }) {
         required
         autoComplete="email"
         placeholder="you@example.com"
-        className="h-12 rounded-button bg-surface-2 px-4 text-ink placeholder:text-faint outline-none ring-1 ring-edge focus:ring-accent"
+        className="h-12 rounded-[10px] bg-surface-2 px-4 text-ink placeholder:text-faint outline-none ring-1 ring-edge focus:ring-accent"
       />
       <label htmlFor="password" className="eyebrow">
         Password
@@ -32,12 +32,12 @@ export default function LoginForm({ notice }: { notice?: string }) {
         required
         autoComplete="current-password"
         placeholder="••••••••"
-        className="h-12 rounded-button bg-surface-2 px-4 text-ink placeholder:text-faint outline-none ring-1 ring-edge focus:ring-accent"
+        className="h-12 rounded-[10px] bg-surface-2 px-4 text-ink placeholder:text-faint outline-none ring-1 ring-edge focus:ring-accent"
       />
       <button
         type="submit"
         disabled={pending}
-        className="font-display h-12 rounded-button bg-accent px-4 text-base font-semibold text-[#14100E] transition-opacity disabled:opacity-60"
+        className="tap mt-1 h-12 rounded-[10px] bg-accent px-4 text-base font-semibold text-[#14100E] shadow-[0_8px_24px_-10px_rgba(216,172,85,0.7)] transition-all hover:brightness-105 disabled:opacity-60 disabled:shadow-none"
       >
         {pending ? "Signing in…" : "Sign in"}
       </button>

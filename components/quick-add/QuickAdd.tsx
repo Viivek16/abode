@@ -46,7 +46,7 @@ export default function QuickAdd({
 
   function close() {
     setShown(false);
-    setTimeout(() => setOpen(false), 240);
+    setTimeout(() => setOpen(false), 400);
   }
 
   function reset() {
@@ -128,8 +128,8 @@ export default function QuickAdd({
             type="button"
             aria-label="Close"
             onClick={close}
-            className="absolute inset-0 bg-black/50"
-            style={{ opacity: shown ? 1 : 0, transition: "opacity .24s" }}
+            className="absolute inset-0 bg-black/55 backdrop-blur-[2px]"
+            style={{ opacity: shown ? 1 : 0, transition: "opacity .4s var(--ease-drawer)" }}
           />
           {/* sheet */}
           <div
@@ -139,14 +139,14 @@ export default function QuickAdd({
             className="glass glass-2 relative w-full max-w-md rounded-t-card p-6 pb-7 sm:rounded-card"
             style={{
               transform: shown ? "translateY(0)" : "translateY(100%)",
-              transition: "transform .24s cubic-bezier(.22,1,.36,1)",
+              transition: "transform .4s var(--ease-drawer)",
             }}
           >
             <div className="mx-auto mb-6 h-1 w-10 rounded-pill bg-surface-2 sm:hidden" />
 
             <div className="space-y-5">
               {/* Income / Expense toggle */}
-              <div className="grid grid-cols-2 gap-1 rounded-pill bg-surface-2 p-1">
+              <div className="grid grid-cols-2 gap-1 rounded-[12px] bg-surface-2 p-1">
                 {(["income", "expense"] as Kind[]).map((k) => (
                   <button
                     key={k}
@@ -157,7 +157,7 @@ export default function QuickAdd({
                       setSrcIndex(0);
                       setCustomSource("");
                     }}
-                    className={`rounded-pill py-2 text-sm font-medium capitalize transition-colors ${
+                    className={`rounded-[9px] py-2 text-sm font-medium capitalize transition-colors ${
                       kind === k ? "bg-accent text-[#14100E]" : "text-muted"
                     }`}
                   >
@@ -169,12 +169,12 @@ export default function QuickAdd({
               {/* Month */}
               <div>
                 <p className="eyebrow mb-2">For</p>
-                <div className="flex items-center justify-between rounded-button bg-surface-2 px-2 py-1.5">
+                <div className="flex items-center justify-between rounded-[10px] bg-surface-2 px-2 py-1.5">
                   <button
                     type="button"
                     aria-label="Previous month"
                     onClick={() => setMonth(shiftYm(month, -1))}
-                    className="grid size-9 place-items-center rounded-pill text-muted transition-colors hover:bg-surface hover:text-ink"
+                    className="grid size-9 place-items-center rounded-[8px] text-muted transition-colors hover:bg-surface hover:text-ink"
                   >
                     <Chevron dir="left" />
                   </button>
@@ -186,7 +186,7 @@ export default function QuickAdd({
                     aria-label="Next month"
                     disabled={atCurrentMonth}
                     onClick={() => !atCurrentMonth && setMonth(shiftYm(month, 1))}
-                    className="grid size-9 place-items-center rounded-pill text-muted transition-colors hover:bg-surface hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted"
+                    className="grid size-9 place-items-center rounded-[8px] text-muted transition-colors hover:bg-surface hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted"
                   >
                     <Chevron dir="right" />
                   </button>
@@ -196,7 +196,7 @@ export default function QuickAdd({
               {/* Amount */}
               <div>
                 <p className="eyebrow mb-2">Amount</p>
-                <div className="flex h-16 items-center gap-2 rounded-button bg-surface-2 px-4">
+                <div className="flex h-16 items-center gap-3 rounded-[10px] bg-surface-2 px-5">
                   <span className="font-display text-2xl text-muted">₹</span>
                   <input
                     autoFocus
@@ -221,7 +221,7 @@ export default function QuickAdd({
                       key={label}
                       type="button"
                       onClick={() => setChip(i)}
-                      className={`rounded-pill px-3.5 py-2 text-sm ring-1 transition-colors ${
+                      className={`tap rounded-[9px] px-3.5 py-2 text-sm ring-1 transition-colors ${
                         activeChip === i
                           ? "bg-surface-2 text-ink ring-accent"
                           : "text-muted ring-edge hover:text-ink"
@@ -236,7 +236,7 @@ export default function QuickAdd({
                     value={customSource}
                     onChange={(e) => setCustomSource(e.target.value)}
                     placeholder="Name this source"
-                    className="mt-2.5 h-11 w-full rounded-button bg-surface-2 px-4 text-sm text-ink outline-none placeholder:text-faint"
+                    className="mt-2.5 h-11 w-full rounded-[10px] bg-surface-2 px-4 text-sm text-ink outline-none placeholder:text-faint"
                   />
                 )}
               </div>
@@ -246,7 +246,7 @@ export default function QuickAdd({
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Note (optional)"
-                className="h-11 w-full rounded-button bg-surface-2 px-4 text-sm text-ink outline-none placeholder:text-faint"
+                className="h-11 w-full rounded-[10px] bg-surface-2 px-4 text-sm text-ink outline-none placeholder:text-faint"
               />
             </div>
 
@@ -254,7 +254,7 @@ export default function QuickAdd({
               type="button"
               onClick={submit}
               disabled={!valid || saving}
-              className="mt-6 h-12 w-full rounded-button bg-accent text-base font-semibold text-[#14100E] shadow-[0_8px_24px_-10px_rgba(205,163,73,0.7)] transition-all hover:brightness-105 active:scale-[0.99] disabled:opacity-50 disabled:shadow-none"
+              className="mt-6 h-12 w-full rounded-[10px] bg-accent text-base font-semibold text-[#14100E] shadow-[0_8px_24px_-10px_rgba(205,163,73,0.7)] transition-all hover:brightness-105 active:scale-[0.99] disabled:opacity-50 disabled:shadow-none"
             >
               {saving ? "Adding…" : `Add ${kind}`}
             </button>

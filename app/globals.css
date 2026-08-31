@@ -3,45 +3,53 @@
 /* ============================================================
    Abode — warm liquid-glass design system
    Warm-dark base, honey-gold accent, Fraunces + Sora.
+   Motion tuned to Apple's fluid-interface bar.
    ============================================================ */
 :root {
   /* surfaces */
   --bg: #14100E;          /* warm near-black */
-  --bg-2: #1A1512;        /* raised base for layering */
-  --surface: #1E1714;     /* cards */
-  --surface-2: #271D18;   /* nested surfaces, tracks */
-  --edge: rgba(255, 255, 255, 0.08);
-  --edge-strong: rgba(255, 255, 255, 0.14);
+  --bg-2: #1A1512;
+  --surface: #1E1714;     /* cards (opaque fallback) */
+  --surface-2: #2A2019;   /* nested surfaces, tracks */
+  --edge: rgba(255, 255, 255, 0.09);
+  --edge-strong: rgba(255, 255, 255, 0.16);
 
   /* text */
-  --ink: #F3ECE6;
-  --muted: #A08E82;
+  --ink: #F5EFE9;
+  --muted: #A8968A;
   --faint: #6E5F55;
 
   /* brand */
-  --accent: #CDA349;      /* honey-gold */
-  --accent-soft: #E0BE73;
+  --accent: #D8AC55;      /* honey-gold, a touch brighter */
+  --accent-soft: #E7C67E;
   --accent-deep: #A9812F;
-  --positive: #8FB3A3;    /* sage, gains */
-  --negative: #CE8A7E;    /* dusty rose, losses */
+  --positive: #93B9A8;    /* sage, gains */
+  --negative: #D59285;    /* dusty rose, losses */
 
   /* quota buckets */
-  --bucket-bills: #7FA893;
-  --bucket-invest: #8C93C7;
-  --bucket-personal: #B487AE;
-  --bucket-emergency: #CBA35C;
+  --bucket-bills: #82AE98;
+  --bucket-invest: #9096CE;
+  --bucket-personal: #BB8BB5;
+  --bucket-emergency: #D2A85F;
 
   /* glass material */
-  --glass-hi: rgba(255, 255, 255, 0.05);   /* inset top highlight */
-  --glass-line: rgba(255, 255, 255, 0.10); /* hairline border */
+  --glass-fill: rgba(32, 24, 20, 0.62);
+  --glass-fill-2: rgba(36, 27, 22, 0.7);
+  --glass-hi: rgba(255, 255, 255, 0.07);   /* inset top highlight */
+  --glass-line: rgba(255, 255, 255, 0.11); /* hairline border */
   --shadow-1: 0 1px 0 0 var(--glass-hi) inset,
-              0 18px 40px -26px rgba(0, 0, 0, 0.75);
+              0 16px 34px -22px rgba(0, 0, 0, 0.8);
   --shadow-2: 0 1px 0 0 var(--glass-hi) inset,
-              0 30px 60px -30px rgba(0, 0, 0, 0.85);
+              0 34px 70px -30px rgba(0, 0, 0, 0.9);
+
+  /* motion */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 
   /* radii */
   --r-card: 22px;
-  --r-button: 13px;
+  --r-button: 12px;
   --r-pill: 999px;
 }
 
@@ -87,10 +95,11 @@ body {
   color: var(--ink);
   font-family: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  /* atmosphere: a soft honey aurora at the top over the warm base */
+  text-rendering: optimizeLegibility;
+  /* atmosphere: soft honey aurora over the warm base */
   background:
-    radial-gradient(130% 90% at 50% -20%, rgba(205, 163, 73, 0.10), transparent 55%),
-    radial-gradient(120% 70% at 100% 0%, rgba(140, 147, 199, 0.05), transparent 50%),
+    radial-gradient(135% 95% at 50% -22%, rgba(216, 172, 85, 0.13), transparent 56%),
+    radial-gradient(120% 70% at 100% 2%, rgba(144, 150, 206, 0.06), transparent 50%),
     var(--bg);
   background-attachment: fixed;
 }
@@ -102,7 +111,7 @@ body::before {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.035;
+  opacity: 0.04;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -110,9 +119,9 @@ body::before {
 .font-display {
   font-family: var(--font-fraunces), Georgia, "Times New Roman", serif;
   font-feature-settings: "ss01";
+  letter-spacing: -0.015em; /* negative tracking as display type grows */
 }
 
-/* Tabular figures so digits do not shift while animating */
 .tnum {
   font-variant-numeric: tabular-nums lining-nums;
   font-feature-settings: "tnum", "lnum";
@@ -126,22 +135,29 @@ body::before {
   font-weight: 600;
 }
 
-/* ---- Glass card material ---- */
+/* ---- Glass material (Apple translucency: blur + saturate + bright top edge) ---- */
 .glass {
   position: relative;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 40%),
-    var(--surface);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0) 42%),
+    var(--glass-fill);
   border: 1px solid var(--glass-line);
   border-radius: var(--r-card);
   box-shadow: var(--shadow-1);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
 }
+/* larger surfaces read thicker: more blur, deeper shadow */
 .glass-2 {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0) 46%),
+    var(--glass-fill-2);
   box-shadow: var(--shadow-2);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
 }
 
-/* Soft ambient honey glow behind a hero card (never on buttons or text) */
+/* Soft ambient honey glow behind a hero card */
 .ambient {
   position: relative;
   isolation: isolate;
@@ -151,20 +167,57 @@ body::before {
   position: absolute;
   inset: -1px;
   border-radius: inherit;
-  background: radial-gradient(130% 120% at 20% 0%, rgba(205, 163, 73, 0.16), transparent 60%);
+  background: radial-gradient(130% 120% at 18% -10%, rgba(216, 172, 85, 0.2), transparent 62%);
   pointer-events: none;
   z-index: -1;
 }
 
+/* ---- Micro-interactions (gate hover to fine pointers; press works anywhere) ---- */
+.tap {
+  transition: transform 0.14s var(--ease-out);
+  touch-action: manipulation;
+}
+.tap:active {
+  transform: scale(0.97);
+}
+@media (hover: hover) and (pointer: fine) {
+  .lift {
+    transition: transform 0.28s var(--ease-out), box-shadow 0.28s var(--ease-out),
+      border-color 0.28s var(--ease-out);
+  }
+  .lift:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-2);
+    border-color: var(--edge-strong);
+  }
+}
+
 /* ---- Motion: entrance reveal (staggered by inline --i) ---- */
 @keyframes rise {
-  from { opacity: 0; transform: translateY(14px) scale(0.99); }
+  from { opacity: 0; transform: translateY(16px) scale(0.985); }
   to   { opacity: 1; transform: none; }
 }
 .reveal {
   opacity: 0;
-  animation: rise 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  animation-delay: calc(var(--i, 0) * 70ms);
+  animation: rise 0.66s var(--ease-out) forwards;
+  animation-delay: calc(var(--i, 0) * 65ms);
+  will-change: transform, opacity;
+}
+
+/* ---- Sheet enter (iOS drawer curve; materialize with scale) ---- */
+@keyframes sheet-rise {
+  from { opacity: 0; transform: translateY(6%) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---- Tooltip / popover pop (anchored, scales from its origin) ---- */
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.94); }
+  to   { opacity: 1; transform: none; }
+}
+.pop-in {
+  animation: pop-in 0.16s var(--ease-out);
+  transform-origin: bottom center;
 }
 
 /* ---- Skeleton shimmer ---- */
@@ -179,14 +232,13 @@ body::before {
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.07), transparent);
   animation: shimmer 1.5s infinite;
 }
 @keyframes shimmer {
   100% { transform: translateX(100%); }
 }
 
-/* Visible keyboard focus */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -194,11 +246,11 @@ body::before {
 }
 
 ::selection {
-  background: rgba(205, 163, 73, 0.28);
+  background: rgba(216, 172, 85, 0.3);
   color: var(--ink);
 }
 
-/* Slow animated dash so money looks like it is moving along the flow links */
+/* Slow animated dash so money looks like it moves along the flow links */
 @keyframes flowdash {
   to { stroke-dashoffset: -32; }
 }
@@ -207,7 +259,17 @@ body::before {
   animation: flowdash 1.6s linear infinite;
 }
 
-/* Honor reduced motion: kill transitions + animations */
+/* Frostier glass when the viewer asks for less transparency */
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-2 {
+    background: var(--surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* Reduced motion: keep opacity/color, drop movement */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

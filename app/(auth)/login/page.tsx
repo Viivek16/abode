@@ -9,14 +9,14 @@ export default async function LoginPage({
 
   return (
     <main className="flex min-h-screen items-center justify-center px-6">
-      <div className="ambient w-full max-w-sm rounded-card bg-surface p-7 ring-1 ring-edge">
+      <div className="reveal ambient glass glass-2 w-full max-w-sm p-8">
         <div className="relative z-10">
           <p className="eyebrow">Abode</p>
-          <h1 className="font-display mt-1 text-3xl font-bold text-ink">
+          <h1 className="font-display mt-2 text-3xl font-semibold leading-tight tracking-tight text-ink">
             Your money, at a glance
           </h1>
-          <p className="mt-2 mb-6 text-sm text-muted">
-            Private dashboard. Sign in with a magic link.
+          <p className="mt-2.5 mb-6 text-sm text-muted">
+            A private dashboard. Owner access only.
           </p>
           <LoginForm notice={error} />
         </div>

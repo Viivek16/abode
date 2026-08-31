@@ -11,15 +11,18 @@ import PotCards from "@/components/pots/PotCards";
 import MonthSwitcher from "@/components/month-switcher/MonthSwitcher";
 import UpcomingStrip from "@/components/upcoming/UpcomingStrip";
 import QuickAdd from "@/components/quick-add/QuickAdd";
+import AllocateSheet from "@/components/allocate/AllocateSheet";
 import Toast from "@/components/ui/Toast";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import {
   useAddEntry,
+  useAddTransfers,
   useDashboardData,
   useIncomeMonths,
-  useMonthlyIncome,
+  useMonthlyTotals,
   useRealtime,
   type NewEntry,
+  type NewTransfer,
 } from "@/lib/hooks/useDashboard";
 import { currentYm, deriveMonth, netWorth, shiftYm } from "@/lib/logic";
 import type { BucketKey } from "@/lib/types";
@@ -28,15 +31,17 @@ export default function Dashboard() {
   const [picked, setPicked] = useState<string | null>(null);
   const [selected, setSelected] = useState<BucketKey | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [allocateOpen, setAllocateOpen] = useState(false);
 
   const { data: incomeMonths } = useIncomeMonths();
-  const { data: monthly } = useMonthlyIncome();
+  const { data: monthly } = useMonthlyTotals();
   // Default to the latest month that has income; an explicit pick takes over once made.
   const ym = picked ?? incomeMonths?.[incomeMonths.length - 1] ?? currentYm();
 
   const { data, isLoading } = useDashboardData(ym);
   useRealtime(ym);
   const addEntry = useAddEntry(ym);
+  const addTransfers = useAddTransfers(ym);
 
   const quota = data?.quota ?? [];
   const income = data?.income ?? [];
@@ -52,10 +57,21 @@ export default function Dashboard() {
     setToast(e.kind === "expense" ? "Expense added" : "Income added");
   }
 
+  async function onAllocate(list: NewTransfer[]) {
+    await addTransfers.mutateAsync(list);
+    setToast("Allocated");
+  }
+
   const sections: ReactNode[] = [
     <NetWorthHero key="hero" value={worth} prevValue={data?.prevNetWorth ?? null} />,
     <StatTrio key="stats" earned={earned} spent={spent} kept={kept} />,
-    <QuotaRings key="rings" buckets={buckets} selected={selected} onSelect={setSelected} />,
+    <QuotaRings
+      key="rings"
+      buckets={buckets}
+      selected={selected}
+      onSelect={setSelected}
+      onAllocate={() => setAllocateOpen(true)}
+    />,
     <Flow
       key="flow"
       earned={earned}
@@ -123,6 +139,15 @@ export default function Dashboard() {
       )}
 
       <QuickAdd onAdd={onAdd} />
+      <AllocateSheet
+        open={allocateOpen}
+        onClose={() => setAllocateOpen(false)}
+        ym={ym}
+        buckets={buckets}
+        pots={pots}
+        transfers={transfers}
+        onSave={onAllocate}
+      />
       <Toast message={toast} onDone={() => setToast(null)} />
     </main>
   );

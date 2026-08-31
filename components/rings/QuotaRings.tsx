@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { compact } from "@/lib/format";
 import type { BucketView, BucketKey } from "@/lib/types";
 
-const SIZE = 240;
+const SIZE = 248;
 const C = SIZE / 2;
-const RADII = [104, 84, 64, 44]; // outer → inner; inner radius sized to clear the center label
-const STROKE = 12;
+const RADII = [112, 90, 68, 50]; // outer → inner; inner radius sized to clear the center label
+const STROKE = 11;
 
 function Ring({
   radius,
@@ -50,10 +50,12 @@ export default function QuotaRings({
   buckets,
   selected,
   onSelect,
+  onAllocate,
 }: {
   buckets: BucketView[];
   selected: BucketKey | null;
   onSelect: (k: BucketKey | null) => void;
+  onAllocate?: () => void;
 }) {
   const [ready, setReady] = useState(false);
   useEffect(() => {
@@ -66,7 +68,18 @@ export default function QuotaRings({
 
   return (
     <section className="glass p-6">
-      <p className="eyebrow mb-5">Quota buckets</p>
+      <div className="mb-5 flex items-center justify-between">
+        <p className="eyebrow">Quota buckets</p>
+        {onAllocate && (
+          <button
+            type="button"
+            onClick={onAllocate}
+            className="tap rounded-[8px] px-3 py-1.5 text-xs font-medium text-accent ring-1 ring-accent/30 transition-colors hover:bg-accent/10"
+          >
+            Allocate →
+          </button>
+        )}
+      </div>
       <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:gap-8">
         {/* Rings */}
         <div className="relative shrink-0" style={{ width: SIZE, height: SIZE }}>
@@ -83,9 +96,9 @@ export default function QuotaRings({
               />
             ))}
           </svg>
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-1 text-center leading-tight">
+          <div className="pointer-events-none absolute inset-0 mx-auto flex max-w-[92px] flex-col items-center justify-center text-center leading-tight">
             <span className="eyebrow">Spent</span>
-            <span className="font-display tnum mt-1 text-xl font-bold text-ink">
+            <span className="font-display tnum mt-1 text-lg font-semibold text-ink">
               {compact(totalSpent)}
             </span>
             <span className="tnum mt-0.5 text-[11px] text-muted">
@@ -104,7 +117,7 @@ export default function QuotaRings({
                   type="button"
                   aria-pressed={selected === b.key}
                   onClick={() => onSelect(selected === b.key ? null : b.key)}
-                  className="w-full rounded-button p-2 text-left transition-opacity hover:bg-surface-2"
+                  className="tap w-full rounded-[10px] p-2 text-left transition-opacity hover:bg-surface-2"
                   style={{ opacity: isDim ? 0.4 : 1 }}
                 >
                   <div className="flex items-center justify-between gap-2">

@@ -116,3 +116,57 @@ export async function pushMonthIncome(
   }
   return { tab: tab.title, created, writes };
 }
+
+// Normalize a pot name for fuzzy matching ("Crypto (Mudrex)" ~ "Crypto",
+// "Mutual Funds\n(Ketan Sheth)" ~ "Mutual Funds").
+const normPot = (s: string) =>
+  s.toLowerCase().replace(/\n/g, " ").replace(/\(.*?\)/g, "").trim();
+
+export type TransferWrite = { pot: string; row: number; amount: number };
+
+// Push a month's transfers (sum per pot) into the tab's "Transfered to" table.
+export async function pushMonthTransfers(
+  ym: string,
+  byPot: Record<string, number>,
+  { dryRun = false }: { dryRun?: boolean } = {},
+): Promise<{ tab: string; writes: TransferWrite[] }> {
+  const tabs = await getTabs();
+  const byYm = new Map<string, TabMeta>();
+  for (const t of tabs) {
+    const y = parseTabToYm(t.title);
+    if (y) byYm.set(y, t);
+  }
+
+  let tab = byYm.get(ym) ?? null;
+  if (!tab) {
+    const latest = [...byYm.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1))[0];
+    if (!latest) throw new Error("No monthly tab to use as a template");
+    if (dryRun) return { tab: `${ymToTabTitle(ym)} (new)`, writes: [] };
+    tab = await duplicateTab(latest[1].sheetId, ymToTabTitle(ym));
+  }
+
+  const rows = await getValues(`${tab.title}!A1:D40`);
+  const hdr = rows.findIndex((r) =>
+    (r[0] ?? "").toString().trim().toLowerCase().startsWith("transfered to"),
+  );
+  if (hdr === -1) throw new Error("No 'Transfered to' section in tab");
+
+  const writes: TransferWrite[] = [];
+  for (const [pot, amount] of Object.entries(byPot)) {
+    const target = normPot(pot);
+    let row = -1;
+    for (let i = hdr + 1; i < rows.length; i++) {
+      const a = (rows[i]?.[0] ?? "").toString();
+      if (!a.trim()) break; // blank row ends the table
+      const n = normPot(a);
+      if (n.includes(target) || target.includes(n)) {
+        row = i + 1;
+        break;
+      }
+    }
+    if (row === -1) continue; // no matching sheet row
+    writes.push({ pot, row, amount });
+    if (!dryRun) await updateValues(`${tab.title}!B${row}`, [[amount]]);
+  }
+  return { tab: tab.title, writes };
+}
