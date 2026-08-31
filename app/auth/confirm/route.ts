@@ -10,7 +10,6 @@ export async function GET(request: NextRequest) {
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
   const code = searchParams.get("code");
-  const admin = (process.env.ADMIN_EMAIL ?? "").trim().toLowerCase();
 
   const supabase = await createClient();
 
@@ -24,16 +23,8 @@ export async function GET(request: NextRequest) {
   }
 
   if (ok) {
-    // Owner-only gate at the callback (Section 9): reject any other address.
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    const email = (user?.email ?? "").toLowerCase();
-    if (email && email === admin) {
-      return NextResponse.redirect(`${origin}/`);
-    }
-    await supabase.auth.signOut();
-    return NextResponse.redirect(`${origin}/login?error=not_allowed`);
+    await supabase.rpc("ensure_default_pots"); // seed a starter pot set for new users
+    return NextResponse.redirect(`${origin}/`);
   }
 
   return NextResponse.redirect(`${origin}/login?error=auth`);

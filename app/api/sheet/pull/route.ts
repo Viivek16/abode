@@ -29,17 +29,28 @@ export async function POST(req: Request) {
   if (!source) return NextResponse.json({ error: "no source" }, { status: 400 });
   const amount = Number(body.amount) || 0;
 
-  const admin = supabaseAdmin();
-  const del = await admin
+  const db = supabaseAdmin();
+
+  // The sheet belongs to the owner — write into the owner's account.
+  const { data: list } = await db.auth.admin.listUsers();
+  const ownerId = list?.users.find(
+    (u) => (u.email ?? "").toLowerCase() === (process.env.ADMIN_EMAIL ?? "").toLowerCase(),
+  )?.id;
+  if (!ownerId)
+    return NextResponse.json({ error: "owner not found" }, { status: 500 });
+
+  const del = await db
     .from("income_entries")
     .delete()
     .eq("ym", ym)
-    .eq("source_name", source);
+    .eq("source_name", source)
+    .eq("user_id", ownerId);
   if (del.error)
     return NextResponse.json({ error: del.error.message }, { status: 500 });
 
   if (amount > 0) {
-    const ins = await admin.from("income_entries").insert({
+    const ins = await db.from("income_entries").insert({
+      user_id: ownerId,
       entry_date: `${ym}-01`,
       ym,
       source_name: source,

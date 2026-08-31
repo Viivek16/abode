@@ -12,6 +12,11 @@ export async function POST(req: Request) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
+  // Sheet sync is owner-only for now; friends' data never touches the sheet.
+  const admin = (process.env.ADMIN_EMAIL ?? "").trim().toLowerCase();
+  if ((user.email ?? "").toLowerCase() !== admin)
+    return NextResponse.json({ ok: true, skipped: "not owner" });
+
   const body = (await req.json().catch(() => ({}))) as {
     ym?: string;
     dryRun?: boolean;
@@ -19,11 +24,12 @@ export async function POST(req: Request) {
   if (!/^\d{4}-\d{2}$/.test(body.ym ?? ""))
     return NextResponse.json({ error: "bad ym" }, { status: 400 });
 
-  const admin = supabaseAdmin();
-  const { data, error } = await admin
+  const db = supabaseAdmin();
+  const { data, error } = await db
     .from("income_entries")
     .select("source_name, amount")
-    .eq("ym", body.ym);
+    .eq("ym", body.ym)
+    .eq("user_id", user.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const bySource: Record<string, number> = {};
