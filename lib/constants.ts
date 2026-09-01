@@ -15,8 +15,15 @@ export const EXPENSE_CATEGORIES: { label: string; bucket: BucketKey }[] = [
 ];
 
 // Income source tags. "Other" (last) reveals a free-text field for any source
-// not listed here.
+// not listed here. The owner's tags mirror the Google Sheet's pre-named rows;
+// everyone else gets generic tags. A tag is always required on an income entry.
 export const INCOME_SOURCES = ["NTC", "Yellow", "Freelancing", "Other"] as const;
+export const GENERIC_INCOME_SOURCES = [
+  "Salary",
+  "Freelancing",
+  "Investments",
+  "Other",
+] as const;
 
 // CSS variable per bucket, for inline SVG / dynamic styling.
 export const bucketVar = (key: BucketKey) => `var(--bucket-${key})`;

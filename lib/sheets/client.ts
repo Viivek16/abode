@@ -77,6 +77,23 @@ export async function duplicateTab(
   return j.replies[0].duplicateSheet.properties;
 }
 
+// Rename an existing tab.
+export async function renameTab(sheetId: number, newTitle: string): Promise<void> {
+  await api(`:batchUpdate`, {
+    method: "POST",
+    body: JSON.stringify({
+      requests: [
+        {
+          updateSheetProperties: {
+            properties: { sheetId, title: newTitle },
+            fields: "title",
+          },
+        },
+      ],
+    }),
+  });
+}
+
 // Insert one blank row directly after 1-based row `afterRow` (Sheets auto-adjusts
 // the surrounding SUM/formula ranges so inserting inside the ledger is safe).
 export async function insertRowAfter(

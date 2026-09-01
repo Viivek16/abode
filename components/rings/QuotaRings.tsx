@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { compact } from "@/lib/format";
+import { rupee } from "@/lib/format";
 import type { BucketView, BucketKey } from "@/lib/types";
 
 const SIZE = 248;
@@ -96,13 +96,13 @@ export default function QuotaRings({
               />
             ))}
           </svg>
-          <div className="pointer-events-none absolute inset-0 mx-auto flex max-w-[92px] flex-col items-center justify-center text-center leading-tight">
+          <div className="pointer-events-none absolute inset-0 mx-auto flex max-w-[104px] flex-col items-center justify-center text-center leading-tight">
             <span className="eyebrow">Spent</span>
-            <span className="font-display tnum mt-1 text-lg font-semibold text-ink">
-              {compact(totalSpent)}
+            <span className="font-display tnum mt-1 text-[15px] font-semibold text-ink">
+              {rupee(totalSpent)}
             </span>
-            <span className="tnum mt-0.5 text-[11px] text-muted">
-              of {compact(totalAlloc)}
+            <span className="tnum mt-0.5 text-[10px] text-muted">
+              of {rupee(totalAlloc)}
             </span>
           </div>
         </div>
@@ -131,8 +131,8 @@ export default function QuotaRings({
                         <span className="text-xs font-medium text-negative">over</span>
                       )}
                     </span>
-                    <span className="tnum text-xs text-muted">
-                      {compact(b.spent)} / {compact(b.allocated)}
+                    <span className="tnum shrink-0 text-[11px] text-muted">
+                      {rupee(b.spent)} / {rupee(b.allocated)}
                     </span>
                   </div>
                   <div className="mt-1.5 h-1.5 overflow-hidden rounded-pill bg-surface-2">

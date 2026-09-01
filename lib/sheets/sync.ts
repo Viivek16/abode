@@ -6,6 +6,7 @@ import {
   getTabs,
   getValues,
   insertRowAfter,
+  renameTab,
   updateValues,
   type TabMeta,
 } from "./client";
@@ -38,7 +39,7 @@ export type PushResult = {
 export async function pushMonthIncome(
   ym: string,
   bySource: Record<string, number>,
-  { dryRun = false }: { dryRun?: boolean } = {},
+  { dryRun = false, tabTitle }: { dryRun?: boolean; tabTitle?: string } = {},
 ): Promise<PushResult> {
   const tabs = await getTabs();
   const byYm = new Map<string, TabMeta>();
@@ -46,6 +47,11 @@ export async function pushMonthIncome(
     const y = parseTabToYm(t.title);
     if (y) byYm.set(y, t);
   }
+
+  // A custom name only applies when it still parses to this same month, so tab
+  // <-> month lookups keep working ("SEPT 2025" is fine, "Notes" is ignored).
+  const desiredTitle =
+    tabTitle && parseTabToYm(tabTitle) === ym ? tabTitle.trim() : ymToTabTitle(ym);
 
   let tab = byYm.get(ym) ?? null;
   let created = false;
@@ -56,7 +62,7 @@ export async function pushMonthIncome(
     if (dryRun) {
       // Can't read a tab that doesn't exist yet; report intent only.
       return {
-        tab: `${ymToTabTitle(ym)} (new, cloned from ${latest[1].title})`,
+        tab: `${desiredTitle} (new, cloned from ${latest[1].title})`,
         created,
         writes: Object.entries(bySource).map(([s, amount]) => ({
           label: sheetLabel(s),
@@ -65,7 +71,11 @@ export async function pushMonthIncome(
         })),
       };
     }
-    tab = await duplicateTab(latest[1].sheetId, ymToTabTitle(ym));
+    tab = await duplicateTab(latest[1].sheetId, desiredTitle);
+  } else if (!dryRun && desiredTitle !== tab.title) {
+    // Existing tab, owner asked for a different name: rename in place.
+    await renameTab(tab.sheetId, desiredTitle);
+    tab = { ...tab, title: desiredTitle };
   }
 
   let rows = await getValues(LEDGER_RANGE(tab.title));

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { compact } from "@/lib/format";
+import { rupee } from "@/lib/format";
 import type { BucketKey, BucketView, Pot, Transfer } from "@/lib/types";
 
 const W = 640;
@@ -19,6 +19,8 @@ type Link = {
   width: number;
   color: string;
   bucket: BucketKey;
+  amount: number;
+  label: string;
 };
 
 function path(x1: number, y1: number, x2: number, y2: number) {
@@ -75,6 +77,8 @@ export default function Flow({
       width: Math.max(bn.h, 1),
       color: bn.b.color,
       bucket: bn.b.key,
+      amount: bn.b.allocated,
+      label: bn.b.name.replace(/ \(.*/, ""),
     }));
 
     // Aggregate transfers per pot, ordered by the bucket that first funds them.
@@ -99,10 +103,11 @@ export default function Flow({
     let cyPot = Math.max(TOP, TOP + (AVAIL - potsHeight) / 2);
     const potNodes = new Map<
       string,
-      { y: number; h: number; cum: number; name: string; color: string }
+      { y: number; h: number; cum: number; name: string; color: string; amount: number }
     >();
     for (const id of potIds) {
-      const h = potAgg.get(id)!.received * k;
+      const received = potAgg.get(id)!.received;
+      const h = received * k;
       const p = potById.get(id);
       potNodes.set(id, {
         y: cyPot,
@@ -110,6 +115,7 @@ export default function Flow({
         cum: cyPot,
         name: p?.name ?? "Pot",
         color: p?.color ?? "var(--muted)",
+        amount: received,
       });
       cyPot += h + GAP;
     }
@@ -130,12 +136,15 @@ export default function Flow({
       const pn = potNodes.get(t.pot_id!);
       if (!pn) continue;
       const py = pn.cum;
+      const bucketName = buckets.find((b) => b.key === bk)?.name.replace(/ \(.*/, "") ?? bk;
       const color = buckets.find((b) => b.key === bk)?.color ?? "var(--muted)";
       outLinks.push({
         d: path(BUCKET_X + NODE, sy + w / 2, POT_X, py + w / 2),
         width: Math.max(w, 1),
         color,
         bucket: bk,
+        amount: Number(t.amount),
+        label: `${bucketName} → ${pn.name}`,
       });
       bucketCum.set(bk, sy + w);
       pn.cum = py + w;
@@ -172,7 +181,9 @@ export default function Flow({
                   strokeWidth={l.width}
                   className="flow-link"
                   style={{ opacity: dim ? 0.08 : 0.4, transition: "opacity .3s" }}
-                />
+                >
+                  <title>{`${l.label}: ${rupee(l.amount)}`}</title>
+                </path>
               );
             })}
             {/* links: buckets -> pots */}
@@ -187,7 +198,9 @@ export default function Flow({
                   strokeWidth={l.width}
                   className="flow-link"
                   style={{ opacity: dim ? 0.08 : 0.45, transition: "opacity .3s" }}
-                />
+                >
+                  <title>{`${l.label}: ${rupee(l.amount)}`}</title>
+                </path>
               );
             })}
 
@@ -201,12 +214,13 @@ export default function Flow({
               fill="var(--accent)"
             />
             <text x={INCOME_X} y={layout.incomeNode.y - 10} className="tnum" fill="var(--muted)" fontSize="15">
-              In {compact(earned)}
+              In {rupee(earned)}
             </text>
 
-            {/* bucket nodes */}
+            {/* bucket nodes: name + exact amount (always visible, for mobile) */}
             {layout.bucketNodes.map((bn) => {
               const dim = selected != null && selected !== bn.b.key;
+              const cy = bn.y + bn.h / 2;
               return (
                 <g
                   key={bn.b.key}
@@ -214,33 +228,31 @@ export default function Flow({
                   style={{ cursor: "pointer", opacity: dim ? 0.35 : 1, transition: "opacity .3s" }}
                 >
                   <rect x={BUCKET_X} y={bn.y} width={NODE} height={bn.h} rx={4} fill={bn.b.color} />
-                  <text
-                    x={BUCKET_X + NODE + 8}
-                    y={bn.y + bn.h / 2 + 5}
-                    fill="var(--ink)"
-                    fontSize="17"
-                  >
+                  <text x={BUCKET_X + NODE + 8} y={cy - 2} fill="var(--ink)" fontSize="16">
                     {bn.b.name.replace(/ \(.*/, "")}
+                  </text>
+                  <text x={BUCKET_X + NODE + 8} y={cy + 15} className="tnum" fill="var(--muted)" fontSize="14">
+                    {rupee(bn.b.allocated)}
                   </text>
                 </g>
               );
             })}
 
-            {/* pot nodes */}
-            {[...layout.potNodes.values()].map((pn, i) => (
-              <g key={`pot-${i}`}>
-                <rect x={POT_X} y={pn.y} width={NODE} height={pn.h} rx={4} fill={pn.color} />
-                <text
-                  x={POT_X - 8}
-                  y={pn.y + pn.h / 2 + 5}
-                  textAnchor="end"
-                  fill="var(--muted)"
-                  fontSize="16"
-                >
-                  {pn.name}
-                </text>
-              </g>
-            ))}
+            {/* pot nodes: name + exact amount (always visible, for mobile) */}
+            {[...layout.potNodes.values()].map((pn, i) => {
+              const cy = pn.y + pn.h / 2;
+              return (
+                <g key={`pot-${i}`}>
+                  <rect x={POT_X} y={pn.y} width={NODE} height={pn.h} rx={4} fill={pn.color} />
+                  <text x={POT_X - 8} y={cy - 2} textAnchor="end" fill="var(--ink)" fontSize="15">
+                    {pn.name}
+                  </text>
+                  <text x={POT_X - 8} y={cy + 15} textAnchor="end" className="tnum" fill="var(--muted)" fontSize="14">
+                    {rupee(pn.amount)}
+                  </text>
+                </g>
+              );
+            })}
           </svg>
         </div>
       )}

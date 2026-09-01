@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import NetWorthHero from "@/components/hero/NetWorthHero";
 import StatTrio from "@/components/stats/StatTrio";
 import QuotaRings from "@/components/rings/QuotaRings";
@@ -9,7 +10,7 @@ import Flow from "@/components/flow/Flow";
 import IncomeHeatmap from "@/components/heatmap/IncomeHeatmap";
 import PotCards from "@/components/pots/PotCards";
 import MonthSwitcher from "@/components/month-switcher/MonthSwitcher";
-import UpcomingStrip from "@/components/upcoming/UpcomingStrip";
+import NotepadStrip from "@/components/notepad/NotepadStrip";
 import QuickAdd from "@/components/quick-add/QuickAdd";
 import AllocateSheet from "@/components/allocate/AllocateSheet";
 import Toast from "@/components/ui/Toast";
@@ -24,14 +25,22 @@ import {
   type NewEntry,
   type NewTransfer,
 } from "@/lib/hooks/useDashboard";
-import { currentYm, deriveMonth, netWorth, shiftYm } from "@/lib/logic";
+import { useNeedsOnboarding } from "@/lib/hooks/useOnboarding";
+import { currentYm, deriveMonth, netWorth, shiftYm, sumAmount } from "@/lib/logic";
 import type { BucketKey } from "@/lib/types";
 
 export default function Dashboard() {
+  const router = useRouter();
   const [picked, setPicked] = useState<string | null>(null);
   const [selected, setSelected] = useState<BucketKey | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [allocateOpen, setAllocateOpen] = useState(false);
+
+  // Brand-new friends are sent to onboarding before they see an empty dashboard.
+  const { data: needsOnboarding } = useNeedsOnboarding();
+  useEffect(() => {
+    if (needsOnboarding) router.replace("/onboarding");
+  }, [needsOnboarding, router]);
 
   const { data: incomeMonths } = useIncomeMonths();
   const { data: monthly } = useMonthlyTotals();
@@ -49,7 +58,9 @@ export default function Dashboard() {
   const pots = data?.pots ?? [];
   const transfers = data?.transfers ?? [];
 
-  const { earned, spent, kept, buckets } = deriveMonth(quota, income, expenses);
+  const { earned, spent, buckets } = deriveMonth(quota, income, expenses);
+  const moved = sumAmount(transfers);
+  const balance = earned - spent - moved;
   const worth = netWorth(pots);
 
   async function onAdd(e: NewEntry) {
@@ -64,7 +75,7 @@ export default function Dashboard() {
 
   const sections: ReactNode[] = [
     <NetWorthHero key="hero" value={worth} prevValue={data?.prevNetWorth ?? null} />,
-    <StatTrio key="stats" earned={earned} spent={spent} kept={kept} />,
+    <StatTrio key="stats" earned={earned} spent={spent} balance={balance} moved={moved} />,
     <QuotaRings
       key="rings"
       buckets={buckets}
@@ -88,7 +99,7 @@ export default function Dashboard() {
       onSelect={(m) => setPicked(m)}
     />,
     <PotCards key="pots" pots={pots} />,
-    <UpcomingStrip key="upcoming" />,
+    <NotepadStrip key="notepad" />,
   ];
 
   return (
@@ -103,10 +114,10 @@ export default function Dashboard() {
             Dashboard
           </span>
           <Link
-            href="/upcoming"
+            href="/notepad"
             className="text-xs text-muted transition-colors hover:text-ink"
           >
-            Upcoming
+            Notepad
           </Link>
         </div>
         <div className="flex items-center gap-2">

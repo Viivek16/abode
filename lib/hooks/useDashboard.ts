@@ -32,9 +32,10 @@ const key = (ym: string) => ["dashboard", ym] as const;
 
 async function fetchDashboard(ym: string): Promise<DashboardData> {
   const prevYm = shiftYm(ym, -1);
-  const [pots, quota, income, expenses, transfers, prevSnap] = await Promise.all([
+  const [pots, quota, userQuota, income, expenses, transfers, prevSnap] = await Promise.all([
     supabase.from("pots").select("*").order("is_bank", { ascending: false }).order("name"),
     supabase.from("quota_config").select("*").order("sort"),
+    supabase.from("user_quota").select("key, pct"),
     supabase.from("income_entries").select("*").eq("ym", ym),
     supabase.from("expense_entries").select("*").eq("ym", ym).order("created_at", { ascending: false }),
     supabase.from("transfers").select("*").eq("ym", ym),
@@ -50,9 +51,18 @@ async function fetchDashboard(ym: string): Promise<DashboardData> {
     ? prevRows.reduce((s, r) => s + Number(r.balance), 0)
     : null;
 
+  // Per-user percentage overrides win over the global quota_config default.
+  const overrides = new Map(
+    (userQuota.data ?? []).map((r) => [r.key as string, Number(r.pct)]),
+  );
+  const mergedQuota = ((quota.data ?? []) as QuotaConfig[]).map((q) => ({
+    ...q,
+    pct: overrides.has(q.key) ? overrides.get(q.key)! : Number(q.pct),
+  }));
+
   return {
     pots: (pots.data ?? []) as Pot[],
-    quota: (quota.data ?? []) as QuotaConfig[],
+    quota: mergedQuota,
     income: (income.data ?? []) as IncomeEntry[],
     expenses: (expenses.data ?? []) as ExpenseEntry[],
     transfers: (transfers.data ?? []) as Transfer[],
@@ -142,6 +152,7 @@ export type NewEntry = {
   source?: string; // income
   note?: string;
   ym?: string; // target month; defaults to the displayed month (backdating)
+  tabTitle?: string; // owner only: custom Google Sheet tab name for the month
 };
 
 export function useAddEntry(ym: string) {
@@ -237,7 +248,7 @@ export function useAddEntry(ym: string) {
       fetch("/api/sheet/push", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ym: targetYm }),
+        body: JSON.stringify({ ym: targetYm, tabTitle: e.tabTitle }),
       }).catch(() => {});
     },
 

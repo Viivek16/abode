@@ -20,6 +20,7 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as {
     ym?: string;
     dryRun?: boolean;
+    tabTitle?: string;
   };
   if (!/^\d{4}-\d{2}$/.test(body.ym ?? ""))
     return NextResponse.json({ error: "bad ym" }, { status: 400 });
@@ -37,7 +38,10 @@ export async function POST(req: Request) {
     bySource[r.source_name] = (bySource[r.source_name] ?? 0) + Number(r.amount);
 
   try {
-    const result = await pushMonthIncome(body.ym!, bySource, { dryRun: !!body.dryRun });
+    const result = await pushMonthIncome(body.ym!, bySource, {
+      dryRun: !!body.dryRun,
+      tabTitle: body.tabTitle,
+    });
     return NextResponse.json({ ok: true, ...result });
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 });

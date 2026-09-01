@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { compact, rupee } from "@/lib/format";
+import { rupee } from "@/lib/format";
 import { ymLabel } from "@/lib/logic";
 import type { NewTransfer } from "@/lib/hooks/useDashboard";
 import type { BucketView, Pot, Transfer } from "@/lib/types";
@@ -137,7 +137,7 @@ export default function AllocateSheet({
                   <span
                     className={`tnum text-xs ${remaining < 0 ? "text-negative" : "text-muted"}`}
                   >
-                    {compact(remaining)} left of {compact(b.allocated)}
+                    {rupee(remaining)} left of {rupee(b.allocated)}
                   </span>
                 </div>
                 <div className="space-y-2">

@@ -1,7 +1,7 @@
 "use client";
 
 import CountUp from "@/components/ui/CountUp";
-import { compact } from "@/lib/format";
+import { rupee } from "@/lib/format";
 import type { Pot } from "@/lib/types";
 
 export default function PotCards({ pots }: { pots: Pot[] }) {
@@ -34,8 +34,8 @@ export default function PotCards({ pots }: { pots: Pot[] }) {
               </div>
               <CountUp
                 value={Number(p.current_balance)}
-                format={compact}
-                className="font-display mt-2 block text-lg font-bold text-ink"
+                format={rupee}
+                className="font-display mt-2 block whitespace-nowrap text-[clamp(0.9rem,4vw,1.125rem)] font-bold text-ink"
               />
             </div>
           );

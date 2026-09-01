@@ -1,8 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { EXPENSE_CATEGORIES, INCOME_SOURCES } from "@/lib/constants";
+import {
+  EXPENSE_CATEGORIES,
+  GENERIC_INCOME_SOURCES,
+  INCOME_SOURCES,
+} from "@/lib/constants";
 import { currentYm, shiftYm, ymLabel } from "@/lib/logic";
+import { ymToTabTitle } from "@/lib/sheets/months";
+import { useIsOwner } from "@/lib/hooks/useIsOwner";
 import type { NewEntry } from "@/lib/hooks/useDashboard";
 import type { BucketKey } from "@/lib/types";
 
@@ -27,6 +33,7 @@ export default function QuickAdd({
 }: {
   onAdd: (e: NewEntry) => Promise<void>;
 }) {
+  const { data: isOwner } = useIsOwner();
   const [open, setOpen] = useState(false);
   const [shown, setShown] = useState(false);
   const [kind, setKind] = useState<Kind>("income");
@@ -36,7 +43,13 @@ export default function QuickAdd({
   const [amount, setAmount] = useState(""); // digits only
   const [note, setNote] = useState("");
   const [month, setMonth] = useState(currentYm());
+  const [tabTitle, setTabTitle] = useState(""); // owner's typed override
+  const [tabEdited, setTabEdited] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const incomeSources = isOwner ? INCOME_SOURCES : GENERIC_INCOME_SOURCES;
+  // Suggested tab name tracks the chosen month until the owner types their own.
+  const effectiveTab = tabEdited ? tabTitle : ymToTabTitle(month);
 
   useEffect(() => {
     if (!open) return;
@@ -56,12 +69,16 @@ export default function QuickAdd({
     setSrcIndex(0);
     setCustomSource("");
     setMonth(currentYm());
+    setTabTitle("");
+    setTabEdited(false);
   }
 
   const amountNum = useMemo(() => (amount ? parseInt(amount, 10) : NaN), [amount]);
-  const valid = Number.isFinite(amountNum) && amountNum > 0;
+  const isOther = kind === "income" && srcIndex === incomeSources.length - 1;
+  // A tag is mandatory on income: "Other" must be named before saving.
+  const tagOk = kind === "expense" || !isOther || customSource.trim().length > 0;
+  const valid = Number.isFinite(amountNum) && amountNum > 0 && tagOk;
   const grouped = amount ? Number(amount).toLocaleString("en-IN") : "";
-  const isOther = kind === "income" && srcIndex === INCOME_SOURCES.length - 1;
   const atCurrentMonth = month === currentYm();
 
   async function submit() {
@@ -81,7 +98,7 @@ export default function QuickAdd({
       } else {
         const source = isOther
           ? customSource.trim() || "Other"
-          : INCOME_SOURCES[srcIndex];
+          : incomeSources[srcIndex];
         await onAdd({
           kind: "income",
           amount: amountNum,
@@ -89,6 +106,7 @@ export default function QuickAdd({
           category: source,
           note: note.trim() || undefined,
           ym: month,
+          tabTitle: isOwner ? effectiveTab.trim() || undefined : undefined,
         });
       }
       reset();
@@ -101,7 +119,7 @@ export default function QuickAdd({
   const chips =
     kind === "expense"
       ? EXPENSE_CATEGORIES.map((c) => c.label)
-      : [...INCOME_SOURCES];
+      : [...incomeSources];
   const activeChip = kind === "expense" ? catIndex : srcIndex;
   const setChip = kind === "expense" ? setCatIndex : setSrcIndex;
 
@@ -192,6 +210,26 @@ export default function QuickAdd({
                   </button>
                 </div>
               </div>
+
+              {/* Sheet tab name (owner only, income only): names or renames the
+                  Google Sheet month tab; free-form so abbreviations work. */}
+              {isOwner && kind === "income" && (
+                <div>
+                  <p className="eyebrow mb-2">Sheet tab name</p>
+                  <input
+                    value={effectiveTab}
+                    onChange={(e) => {
+                      setTabTitle(e.target.value);
+                      setTabEdited(true);
+                    }}
+                    placeholder="e.g. Sept 2025"
+                    className="h-11 w-full rounded-[10px] bg-surface-2 px-4 text-sm text-ink outline-none placeholder:text-faint"
+                  />
+                  <p className="mt-1.5 text-[11px] text-faint">
+                    Name the month&rsquo;s tab your way. Created if new, renamed if it exists.
+                  </p>
+                </div>
+              )}
 
               {/* Amount */}
               <div>

@@ -13,6 +13,11 @@ assert.equal(parseTabToYm("Jan 2026"), "2026-01");
 assert.equal(parseTabToYm("Balance Sheet"), null);
 assert.equal(parseTabToYm("Nonsense"), null);
 
+// Owner-typed custom names still map to their month (month word + trailing year).
+assert.equal(parseTabToYm("SEPT SUBT 2026"), "2026-09");
+assert.equal(parseTabToYm("AUG 2026"), "2026-08");
+assert.equal(parseTabToYm("June salary 2025"), "2025-06");
+
 // New tabs use the recent canonical style.
 assert.equal(ymToTabTitle("2026-09"), "Sept 2026");
 assert.equal(ymToTabTitle("2026-08"), "Aug 2026");
