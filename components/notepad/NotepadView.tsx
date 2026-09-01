@@ -160,7 +160,7 @@ export default function NotepadView() {
 
       <h1 className="font-display mb-1 text-2xl font-bold text-ink">Notepad</h1>
       <p className="mb-5 text-sm text-muted">
-        Tap any name, date or amount to edit it. Hover a row to remove it.
+        Tap any underlined name, date or amount to edit it. Tap × to remove a row.
       </p>
 
       <div className="space-y-4">

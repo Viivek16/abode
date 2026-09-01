@@ -127,6 +127,64 @@ export async function pushMonthIncome(
   return { tab: tab.title, created, writes };
 }
 
+// App -> Sheet: mirror the notepad's Big Buys into the Balance Sheet tab's
+// "Big Buys" table (columns Type | Date | Amount, e.g. H/I/J). Located by the
+// "Big Buys" title cell so we never hardcode positions; writes only those three
+// columns (no row inserts) so the Studio/Lending tables sharing those rows are
+// left untouched.
+export type BigBuy = { name: string; date?: string; amount: number };
+
+export async function pushBigBuys(
+  items: BigBuy[],
+  { dryRun = false }: { dryRun?: boolean } = {},
+): Promise<{ ok: boolean; reason?: string; tab?: string; written?: number }> {
+  const tabs = await getTabs();
+  const tab = tabs.find((t) => t.title.trim().toLowerCase() === "balance sheet");
+  if (!tab) return { ok: false, reason: "no Balance Sheet tab" };
+
+  const rows = await getValues(`${tab.title}!A1:J80`);
+  let ti = -1;
+  let cj = -1;
+  for (let i = 0; i < rows.length && ti === -1; i++) {
+    const r = rows[i] ?? [];
+    for (let j = 0; j < r.length; j++) {
+      if ((r[j] ?? "").toString().trim().toLowerCase() === "big buys") {
+        ti = i;
+        cj = j;
+        break;
+      }
+    }
+  }
+  if (ti === -1) return { ok: false, reason: "no Big Buys table found" };
+
+  const dataStart0 = ti + 2; // title row, header row, then data
+  let oldTotal0 = -1;
+  for (let i = dataStart0; i < rows.length; i++) {
+    if ((rows[i]?.[cj] ?? "").toString().trim().toLowerCase() === "total") {
+      oldTotal0 = i;
+      break;
+    }
+  }
+
+  const sum = items.reduce((s, it) => s + (Number(it.amount) || 0), 0);
+  const oldSpan = oldTotal0 === -1 ? items.length + 1 : oldTotal0 - dataStart0 + 1;
+  const span = Math.min(Math.max(items.length + 1, oldSpan), 60);
+
+  const matrix: (string | number)[][] = [];
+  for (let k = 0; k < span; k++) {
+    if (k < items.length) matrix.push([items[k].name ?? "", items[k].date ?? "", Number(items[k].amount) || 0]);
+    else if (k === items.length) matrix.push(["Total", "", sum]);
+    else matrix.push(["", "", ""]);
+  }
+
+  const colName = String.fromCharCode(65 + cj);
+  const colAmt = String.fromCharCode(65 + cj + 2);
+  const startRow1 = dataStart0 + 1;
+  const endRow1 = dataStart0 + span;
+  if (!dryRun) await updateValues(`${tab.title}!${colName}${startRow1}:${colAmt}${endRow1}`, matrix);
+  return { ok: true, tab: tab.title, written: items.length };
+}
+
 // Normalize a pot name for fuzzy matching ("Crypto (Mudrex)" ~ "Crypto",
 // "Mutual Funds\n(Ketan Sheth)" ~ "Mutual Funds").
 const normPot = (s: string) =>

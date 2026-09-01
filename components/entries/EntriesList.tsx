@@ -30,7 +30,7 @@ export default function EntriesList({
   return (
     <section className="glass p-6">
       <p className="eyebrow mb-1">This month</p>
-      <p className="mb-4 text-xs text-faint">Tap a label or amount to edit. Hover a row to remove it.</p>
+      <p className="mb-4 text-xs text-faint">Tap any underlined value to edit it, or tap × to remove a row.</p>
 
       {empty && <p className="py-2 text-sm text-faint">No entries yet. Add income or an expense.</p>}
 

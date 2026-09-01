@@ -81,6 +81,8 @@ export default function Dashboard() {
     <QuotaRings
       key="rings"
       buckets={buckets}
+      moved={moved}
+      earned={earned}
       selected={selected}
       onSelect={setSelected}
       onAllocate={() => setAllocateOpen(true)}

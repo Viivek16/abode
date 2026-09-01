@@ -3,16 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { rupee } from "@/lib/format";
 
-// Faint on desktop until the row is hovered; always tappable on touch.
+// Always visible so "remove this row" is never a hidden hover-only action.
 export function RemoveButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       type="button"
       aria-label="Remove"
       onClick={onClick}
-      className="tap grid size-6 shrink-0 place-items-center rounded-[6px] text-faint opacity-40 transition-all hover:bg-surface-2 hover:text-negative hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+      className="tap grid size-8 shrink-0 place-items-center rounded-[8px] text-faint opacity-60 transition-all hover:bg-surface-2 hover:text-negative hover:opacity-100"
     >
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
         <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       </svg>
     </button>
@@ -20,8 +20,10 @@ export function RemoveButton({ onClick }: { onClick: () => void }) {
 }
 
 // Tap a value to edit it in place; commit on blur or Enter, cancel on Escape.
-// The read state looks like plain text with a subtle hover cue, so a section
-// reads as a normal list until you actually want to change something.
+// The read state reads as plain text but carries a dotted underline so it is
+// clearly tappable (works on touch too, where there is no hover).
+const READ =
+  "-mx-1 cursor-text rounded-[6px] border-b border-dashed border-edge-strong px-1 pb-0.5 pt-0.5 text-left transition-colors hover:border-accent hover:bg-surface-2";
 
 export function InlineText({
   value,
@@ -75,9 +77,7 @@ export function InlineText({
         setVal(value);
         setEditing(true);
       }}
-      className={`-mx-1 cursor-text rounded-[6px] px-1 py-0.5 text-left transition-colors hover:bg-surface-2 ${
-        value ? "" : "text-faint"
-      } ${className}`}
+      className={`${READ} ${value ? "" : "text-faint"} ${className}`}
     >
       {value || placeholder}
     </button>
@@ -138,7 +138,7 @@ export function InlineAmount({
         setVal(String(value || ""));
         setEditing(true);
       }}
-      className={`tnum -mx-1 cursor-text rounded-[6px] px-1 py-0.5 transition-colors hover:bg-surface-2 ${className}`}
+      className={`tnum ${READ} ${className}`}
     >
       {rupee(value)}
     </button>

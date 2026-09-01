@@ -48,11 +48,15 @@ function Ring({
 
 export default function QuotaRings({
   buckets,
+  moved,
+  earned,
   selected,
   onSelect,
   onAllocate,
 }: {
   buckets: BucketView[];
+  moved: number; // total allocated into pots this month
+  earned: number; // income this month
   selected: BucketKey | null;
   onSelect: (k: BucketKey | null) => void;
   onAllocate?: () => void;
@@ -63,18 +67,23 @@ export default function QuotaRings({
     return () => cancelAnimationFrame(id);
   }, []);
 
-  const totalSpent = buckets.reduce((s, b) => s + b.spent, 0);
-  const totalAlloc = buckets.reduce((s, b) => s + b.allocated, 0);
-
   return (
     <section className="glass p-6">
-      <div className="mb-5 flex items-center justify-between">
-        <p className="eyebrow">Quota buckets</p>
+      {/* Dynamic headline: how much of this month's income is allocated. */}
+      <div className="mb-5 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="eyebrow">Allocated this month</p>
+          <p className="font-display mt-1.5 text-[clamp(1.35rem,6vw,1.95rem)] font-semibold leading-none tracking-tight text-ink">
+            <span className="tnum text-accent">{rupee(moved)}</span>
+            <span className="text-muted"> of </span>
+            <span className="tnum">{rupee(earned)}</span>
+          </p>
+        </div>
         {onAllocate && (
           <button
             type="button"
             onClick={onAllocate}
-            className="tap rounded-[8px] px-3 py-1.5 text-xs font-medium text-accent ring-1 ring-accent/30 transition-colors hover:bg-accent/10"
+            className="tap shrink-0 rounded-[8px] px-3 py-1.5 text-xs font-medium text-accent ring-1 ring-accent/30 transition-colors hover:bg-accent/10"
           >
             Allocate →
           </button>
@@ -96,15 +105,6 @@ export default function QuotaRings({
               />
             ))}
           </svg>
-          <div className="pointer-events-none absolute inset-0 mx-auto flex max-w-[104px] flex-col items-center justify-center text-center leading-tight">
-            <span className="eyebrow">Spent</span>
-            <span className="font-display tnum mt-1 text-[15px] font-semibold text-ink">
-              {rupee(totalSpent)}
-            </span>
-            <span className="tnum mt-0.5 text-[10px] text-muted">
-              of {rupee(totalAlloc)}
-            </span>
-          </div>
         </div>
 
         {/* Legend */}

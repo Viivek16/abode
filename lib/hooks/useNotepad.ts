@@ -75,6 +75,8 @@ export function useSaveNotepad() {
     },
     onSuccess: (clean) => {
       qc.setQueryData(["notepad"], clean);
+      // Mirror Big Buys into the owner's Balance Sheet (no-op for friends).
+      fetch("/api/sheet/push-notepad", { method: "POST" }).catch(() => {});
     },
   });
 }
