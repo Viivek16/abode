@@ -19,24 +19,29 @@ export function RemoveButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-// Tap a value to edit it in place; commit on blur or Enter, cancel on Escape.
-// The read state reads as plain text but carries a dotted underline so it is
-// clearly tappable (works on touch too, where there is no hover).
+// Tap a value to edit it in place. Read state = plain text with a dotted
+// underline (clearly tappable, works on touch). Edit state is minimal: no filled
+// box, just an accent underline, and the input is sized to its content so it can
+// never spill over neighbouring elements. Commit on blur/Enter, cancel on Esc.
 const READ =
-  "-mx-1 cursor-text rounded-[6px] border-b border-dashed border-edge-strong px-1 pb-0.5 pt-0.5 text-left transition-colors hover:border-accent hover:bg-surface-2";
+  "cursor-text rounded-[4px] border-b border-dashed border-edge-strong px-0.5 text-left transition-colors hover:border-accent hover:text-accent-soft";
+const EDIT =
+  "min-w-0 max-w-full border-b-2 border-accent bg-transparent px-0.5 text-ink outline-none";
+
+const ch = (s: string, min: number) => `${Math.min(Math.max(s.length, min) + 1, 22)}ch`;
 
 export function InlineText({
   value,
   onCommit,
   placeholder = "…",
   className = "",
-  inputClassName = "",
+  grow = false,
 }: {
   value: string;
   onCommit: (v: string) => void;
   placeholder?: string;
   className?: string;
-  inputClassName?: string;
+  grow?: boolean; // fill the flex cell instead of sizing to content
 }) {
   const [editing, setEditing] = useState(false);
   const [val, setVal] = useState(value);
@@ -65,7 +70,8 @@ export function InlineText({
             setEditing(false);
           }
         }}
-        className={`rounded-[6px] bg-surface-2 px-1.5 py-0.5 text-ink outline-none ring-1 ring-accent ${inputClassName}`}
+        style={grow ? undefined : { width: ch(val || placeholder, 4) }}
+        className={`${EDIT} ${grow ? "w-full" : ""} ${className}`}
       />
     );
   }
@@ -77,7 +83,7 @@ export function InlineText({
         setVal(value);
         setEditing(true);
       }}
-      className={`${READ} ${value ? "" : "text-faint"} ${className}`}
+      className={`${READ} ${grow ? "block w-full truncate" : ""} ${value ? "" : "text-faint"} ${className}`}
     >
       {value || placeholder}
     </button>
@@ -107,14 +113,16 @@ export function InlineAmount({
     if (n !== value) onCommit(n);
   }
 
+  const grouped = val ? Number(val.replace(/\D/g, "")).toLocaleString("en-IN") : "";
+
   if (editing) {
     return (
-      <span className={`inline-flex items-center gap-0.5 rounded-[6px] bg-surface-2 px-1.5 py-0.5 ring-1 ring-accent ${className}`}>
+      <span className={`inline-flex items-baseline gap-0.5 whitespace-nowrap ${className}`}>
         <span className="text-xs text-faint">₹</span>
         <input
           ref={ref}
           inputMode="numeric"
-          value={val ? Number(val.replace(/\D/g, "")).toLocaleString("en-IN") : ""}
+          value={grouped}
           onChange={(e) => setVal(e.target.value.replace(/\D/g, ""))}
           onBlur={commit}
           onKeyDown={(e) => {
@@ -125,7 +133,8 @@ export function InlineAmount({
             }
           }}
           placeholder="0"
-          className="tnum w-24 bg-transparent text-right text-ink outline-none placeholder:text-faint"
+          style={{ width: ch(grouped || "0", 3) }}
+          className={`${EDIT} tnum text-right`}
         />
       </span>
     );
@@ -138,7 +147,7 @@ export function InlineAmount({
         setVal(String(value || ""));
         setEditing(true);
       }}
-      className={`tnum ${READ} ${className}`}
+      className={`tnum whitespace-nowrap ${READ} ${className}`}
     >
       {rupee(value)}
     </button>

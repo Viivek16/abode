@@ -39,18 +39,24 @@ export default function EntriesList({
           <p className="mb-1 mt-1 text-xs font-medium text-muted">Income</p>
           <ul className="divide-y divide-[var(--edge)]">
             {income.map((r) => (
-              <li key={r.id} className="group flex items-center justify-between gap-3 py-2 text-sm">
-                {isTemp(r.id) ? (
-                  <span className="min-w-0 flex-1 truncate text-ink">{r.source_name}</span>
-                ) : (
-                  <InlineText
-                    value={r.source_name}
-                    onCommit={(v) =>
-                      updateIncome.mutate({ id: r.id, amount: Number(r.amount), source: v || "Income" })
-                    }
-                    className="min-w-0 flex-1 text-ink"
-                  />
-                )}
+              <li
+                key={r.id}
+                className="group -mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 text-sm transition-colors focus-within:bg-surface-2/60"
+              >
+                <div className="min-w-0 flex-1">
+                  {isTemp(r.id) ? (
+                    <span className="truncate text-ink">{r.source_name}</span>
+                  ) : (
+                    <InlineText
+                      value={r.source_name}
+                      onCommit={(v) =>
+                        updateIncome.mutate({ id: r.id, amount: Number(r.amount), source: v || "Income" })
+                      }
+                      grow
+                      className="text-ink"
+                    />
+                  )}
+                </div>
                 <span className="flex items-center gap-2">
                   {isTemp(r.id) ? (
                     <span className="tnum text-positive">₹{Number(r.amount).toLocaleString("en-IN")}</span>
@@ -76,24 +82,30 @@ export default function EntriesList({
           <p className="mb-1 mt-4 text-xs font-medium text-muted">Expenses</p>
           <ul className="divide-y divide-[var(--edge)]">
             {expenses.map((r) => (
-              <li key={r.id} className="group flex items-center justify-between gap-3 py-2 text-sm">
-                {isTemp(r.id) ? (
-                  <span className="min-w-0 flex-1 truncate text-ink">{r.category ?? "Expense"}</span>
-                ) : (
-                  <InlineText
-                    value={r.category ?? ""}
-                    onCommit={(v) =>
-                      updateExpense.mutate({
-                        id: r.id,
-                        amount: Number(r.amount),
-                        bucket: r.bucket_key ?? "personal",
-                        category: v || "Expense",
-                      })
-                    }
-                    placeholder="Category"
-                    className="min-w-0 flex-1 text-ink"
-                  />
-                )}
+              <li
+                key={r.id}
+                className="group -mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 text-sm transition-colors focus-within:bg-surface-2/60"
+              >
+                <div className="min-w-0 flex-1">
+                  {isTemp(r.id) ? (
+                    <span className="truncate text-ink">{r.category ?? "Expense"}</span>
+                  ) : (
+                    <InlineText
+                      value={r.category ?? ""}
+                      onCommit={(v) =>
+                        updateExpense.mutate({
+                          id: r.id,
+                          amount: Number(r.amount),
+                          bucket: r.bucket_key ?? "personal",
+                          category: v || "Expense",
+                        })
+                      }
+                      placeholder="Category"
+                      grow
+                      className="text-ink"
+                    />
+                  )}
+                </div>
                 <span className="flex items-center gap-2">
                   {isTemp(r.id) ? (
                     <span className="tnum text-negative">₹{Number(r.amount).toLocaleString("en-IN")}</span>

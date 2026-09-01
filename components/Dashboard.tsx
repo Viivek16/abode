@@ -12,6 +12,7 @@ import IncomeHeatmap from "@/components/heatmap/IncomeHeatmap";
 import PotCards from "@/components/pots/PotCards";
 import MonthSwitcher from "@/components/month-switcher/MonthSwitcher";
 import NotepadStrip from "@/components/notepad/NotepadStrip";
+import ProfileButton from "@/components/profile/ProfileButton";
 import QuickAdd from "@/components/quick-add/QuickAdd";
 import AllocateSheet from "@/components/allocate/AllocateSheet";
 import Toast from "@/components/ui/Toast";
@@ -126,14 +127,7 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-2">
           <MonthSwitcher ym={ym} onShift={(d) => setPicked(shiftYm(ym, d))} />
-          <form action="/auth/signout" method="post">
-            <button
-              type="submit"
-              className="rounded-pill px-3 py-2 text-xs text-muted ring-1 ring-edge transition-colors hover:text-ink hover:ring-edge-strong"
-            >
-              Sign out
-            </button>
-          </form>
+          <ProfileButton />
         </div>
       </header>
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { rupee } from "@/lib/format";
 import { InlineText, InlineAmount, RemoveButton } from "@/components/ui/InlineEdit";
+import ProfileButton from "@/components/profile/ProfileButton";
 import {
   useNotepad,
   useSaveNotepad,
@@ -70,20 +71,25 @@ function LineTable({
       <ul className="divide-y divide-[var(--edge)]">
         {items.length === 0 && <li className="py-2 text-sm text-faint">Nothing here yet.</li>}
         {items.map((it, i) => (
-          <li key={i} className="group flex items-center justify-between gap-3 py-2 text-sm">
-            <InlineText
-              value={it.name}
-              onCommit={(v) => onSet(i, { name: v })}
-              placeholder="Item name"
-              className="min-w-0 flex-1 text-ink"
-            />
+          <li
+            key={i}
+            className="group -mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 text-sm transition-colors focus-within:bg-surface-2/60"
+          >
+            <div className="min-w-0 flex-1">
+              <InlineText
+                value={it.name}
+                onCommit={(v) => onSet(i, { name: v })}
+                placeholder="Item name"
+                grow
+                className="text-ink"
+              />
+            </div>
             <span className="flex items-center gap-2">
               <InlineText
                 value={it.date ?? ""}
                 onCommit={(v) => onSet(i, { date: v })}
                 placeholder="add date"
                 className="text-xs text-faint"
-                inputClassName="w-28 text-xs"
               />
               <InlineAmount value={it.amount} onCommit={(n) => onSet(i, { amount: n })} className="text-muted" />
               <RemoveButton onClick={() => onRemove(i)} />
@@ -148,14 +154,7 @@ export default function NotepadView() {
           </Link>
           <span className="text-xs font-medium text-accent">Notepad</span>
         </div>
-        <form action="/auth/signout" method="post">
-          <button
-            type="submit"
-            className="rounded-pill px-3 py-2 text-xs text-muted ring-1 ring-edge hover:text-ink"
-          >
-            Sign out
-          </button>
-        </form>
+        <ProfileButton />
       </header>
 
       <h1 className="font-display mb-1 text-2xl font-bold text-ink">Notepad</h1>
@@ -171,14 +170,17 @@ export default function NotepadView() {
               <p className="py-1 text-sm text-faint">No fund managers yet.</p>
             )}
             {working.fund_managers.map((fm, i) => (
-              <div key={i} className="group rounded-button bg-surface-2 p-4">
+              <div key={i} className="group rounded-button bg-surface-2 p-4 transition-shadow focus-within:ring-1 focus-within:ring-edge-strong">
                 <div className="flex items-baseline justify-between gap-2">
-                  <InlineText
-                    value={fm.name}
-                    onCommit={(v) => setFm(i, { name: v })}
-                    placeholder="Name"
-                    className="min-w-0 flex-1 font-medium text-ink"
-                  />
+                  <div className="min-w-0 flex-1">
+                    <InlineText
+                      value={fm.name}
+                      onCommit={(v) => setFm(i, { name: v })}
+                      placeholder="Name"
+                      grow
+                      className="font-medium text-ink"
+                    />
+                  </div>
                   <span className="flex items-center gap-2">
                     <InlineAmount value={fm.amount} onCommit={(n) => setFm(i, { amount: n })} className="text-sm text-accent" />
                     <RemoveButton onClick={() => removeFm(i)} />

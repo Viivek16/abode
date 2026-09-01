@@ -137,7 +137,7 @@ export default function AllocateSheet({
               <p className="eyebrow mb-2">Allocated so far</p>
               <ul className="divide-y divide-[var(--edge)] rounded-[10px] bg-surface-2 px-3">
                 {madeTransfers.map((t) => (
-                  <li key={t.id} className="group flex items-center justify-between gap-3 py-2 text-sm">
+                  <li key={t.id} className="group -mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 text-sm transition-colors focus-within:bg-white/[0.04]">
                     <span className="min-w-0 flex-1 truncate text-muted">{potName(t.pot_id)}</span>
                     <span className="flex items-center gap-2">
                       <InlineAmount
