@@ -32,9 +32,10 @@ const key = (ym: string) => ["dashboard", ym] as const;
 
 async function fetchDashboard(ym: string): Promise<DashboardData> {
   const prevYm = shiftYm(ym, -1);
-  const [pots, quota, income, expenses, transfers, prevSnap] = await Promise.all([
+  const [pots, quota, userQuota, income, expenses, transfers, prevSnap] = await Promise.all([
     supabase.from("pots").select("*").order("is_bank", { ascending: false }).order("name"),
     supabase.from("quota_config").select("*").order("sort"),
+    supabase.from("user_quota").select("key, pct"),
     supabase.from("income_entries").select("*").eq("ym", ym),
     supabase.from("expense_entries").select("*").eq("ym", ym).order("created_at", { ascending: false }),
     supabase.from("transfers").select("*").eq("ym", ym),
@@ -50,9 +51,18 @@ async function fetchDashboard(ym: string): Promise<DashboardData> {
     ? prevRows.reduce((s, r) => s + Number(r.balance), 0)
     : null;
 
+  // Per-user percentage overrides win over the global quota_config default.
+  const overrides = new Map(
+    (userQuota.data ?? []).map((r) => [r.key as string, Number(r.pct)]),
+  );
+  const mergedQuota = ((quota.data ?? []) as QuotaConfig[]).map((q) => ({
+    ...q,
+    pct: overrides.has(q.key) ? overrides.get(q.key)! : Number(q.pct),
+  }));
+
   return {
     pots: (pots.data ?? []) as Pot[],
-    quota: (quota.data ?? []) as QuotaConfig[],
+    quota: mergedQuota,
     income: (income.data ?? []) as IncomeEntry[],
     expenses: (expenses.data ?? []) as ExpenseEntry[],
     transfers: (transfers.data ?? []) as Transfer[],
@@ -142,6 +152,7 @@ export type NewEntry = {
   source?: string; // income
   note?: string;
   ym?: string; // target month; defaults to the displayed month (backdating)
+  tabTitle?: string; // owner only: custom Google Sheet tab name for the month
 };
 
 export function useAddEntry(ym: string) {
@@ -237,7 +248,7 @@ export function useAddEntry(ym: string) {
       fetch("/api/sheet/push", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ym: targetYm }),
+        body: JSON.stringify({ ym: targetYm, tabTitle: e.tabTitle }),
       }).catch(() => {});
     },
 
@@ -282,5 +293,114 @@ export function useAddTransfers(ym: string) {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
+  });
+}
+
+// ---- Edit / delete existing entries (the dashboard is a live ledger) ----
+
+const pushIncomeSheet = (ym: string) =>
+  fetch("/api/sheet/push", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ym }),
+  }).catch(() => {});
+
+const pushTransferSheet = (ym: string) =>
+  fetch("/api/sheet/push-transfers", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ym }),
+  }).catch(() => {});
+
+const invalidateAll = (qc: ReturnType<typeof useQueryClient>) => {
+  qc.invalidateQueries({ queryKey: ["dashboard"] });
+  qc.invalidateQueries({ queryKey: ["income-months"] });
+  qc.invalidateQueries({ queryKey: ["monthly-totals"] });
+};
+
+export function useUpdateIncome(ym: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { id: string; amount: number; source: string }) => {
+      const { error } = await supabase.rpc("update_income", {
+        p_id: v.id,
+        p_amount: v.amount,
+        p_source: v.source,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => pushIncomeSheet(ym),
+    onSettled: () => invalidateAll(qc),
+  });
+}
+
+export function useDeleteIncome(ym: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("delete_income", { p_id: id });
+      if (error) throw error;
+    },
+    onSuccess: () => pushIncomeSheet(ym),
+    onSettled: () => invalidateAll(qc),
+  });
+}
+
+export function useUpdateExpense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: {
+      id: string;
+      amount: number;
+      bucket: string;
+      category: string;
+    }) => {
+      const { error } = await supabase.rpc("update_expense", {
+        p_id: v.id,
+        p_amount: v.amount,
+        p_bucket: v.bucket,
+        p_category: v.category,
+      });
+      if (error) throw error;
+    },
+    onSettled: () => invalidateAll(qc),
+  });
+}
+
+export function useDeleteExpense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("delete_expense", { p_id: id });
+      if (error) throw error;
+    },
+    onSettled: () => invalidateAll(qc),
+  });
+}
+
+export function useUpdateTransfer(ym: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { id: string; amount: number }) => {
+      const { error } = await supabase.rpc("update_transfer", {
+        p_id: v.id,
+        p_amount: v.amount,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => pushTransferSheet(ym),
+    onSettled: () => invalidateAll(qc),
+  });
+}
+
+export function useDeleteTransfer(ym: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("delete_transfer", { p_id: id });
+      if (error) throw error;
+    },
+    onSuccess: () => pushTransferSheet(ym),
+    onSettled: () => invalidateAll(qc),
   });
 }

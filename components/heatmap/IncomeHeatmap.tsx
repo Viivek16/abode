@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { compact } from "@/lib/format";
+import { rupee } from "@/lib/format";
 
 const MONTHS = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
 const FULL = [
@@ -128,7 +128,7 @@ export default function IncomeHeatmap({
                   <button
                     key={m}
                     type="button"
-                    aria-label={`${label}, ${income > 0 ? compact(income) : "no income"}`}
+                    aria-label={`${label}, ${income > 0 ? rupee(income) : "no income"}`}
                     onMouseEnter={(e) => enter(e, label, income, spent)}
                     onMouseLeave={() => setHover(null)}
                     onClick={() => onSelect(ym)}
@@ -170,7 +170,7 @@ export default function IncomeHeatmap({
                 <div key={k} className="flex items-center justify-between">
                   <span className="text-[11px] text-muted">{k}</span>
                   <span className={`font-display tnum text-sm font-semibold ${tone}`}>
-                    {compact(v)}
+                    {rupee(v)}
                   </span>
                 </div>
               ))}

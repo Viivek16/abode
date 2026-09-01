@@ -14,13 +14,18 @@ const ALIASES: Record<string, number> = {
   oct: 10, nov: 11, dec: 12,
 };
 
-// "March 2025" -> "2025-03"; "Sept 2024" -> "2024-09"; returns null for non-month tabs.
+// "March 2025" -> "2025-03"; "Sept 2024" -> "2024-09". Also tolerates custom
+// names as long as they start with a month word and end with a 4-digit year, so
+// owner-typed tabs like "SEPT SUBT 2026" still map back to their month. Returns
+// null for non-month tabs ("Balance Sheet", "Nonsense").
 export function parseTabToYm(title: string): string | null {
-  const m = title.trim().match(/^([A-Za-z]+)\s+(\d{4})$/);
-  if (!m) return null;
-  const mon = ALIASES[m[1].toLowerCase()];
+  const t = title.trim();
+  const first = t.match(/^([A-Za-z]+)/);
+  const year = t.match(/(\d{4})\s*$/);
+  if (!first || !year) return null;
+  const mon = ALIASES[first[1].toLowerCase()];
   if (!mon) return null;
-  return `${m[2]}-${String(mon).padStart(2, "0")}`;
+  return `${year[1]}-${String(mon).padStart(2, "0")}`;
 }
 
 // "2026-09" -> "Sept 2026" (canonical style for a tab we create).

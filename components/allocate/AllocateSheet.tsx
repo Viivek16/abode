@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { compact, rupee } from "@/lib/format";
+import { rupee } from "@/lib/format";
 import { ymLabel } from "@/lib/logic";
-import type { NewTransfer } from "@/lib/hooks/useDashboard";
+import { InlineAmount, RemoveButton } from "@/components/ui/InlineEdit";
+import {
+  useDeleteTransfer,
+  useUpdateTransfer,
+  type NewTransfer,
+} from "@/lib/hooks/useDashboard";
 import type { BucketView, Pot, Transfer } from "@/lib/types";
 
 const digits = (s?: string) => {
@@ -31,6 +36,19 @@ export default function AllocateSheet({
   const [shown, setShown] = useState(false);
   const [amounts, setAmounts] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const updateTransfer = useUpdateTransfer(ym);
+  const deleteTransfer = useDeleteTransfer(ym);
+
+  const potName = useMemo(() => {
+    const m = new Map(pots.map((p) => [p.id, p.name]));
+    return (id: string | null) => (id ? m.get(id) ?? "Pot" : "Pot");
+  }, [pots]);
+
+  // Individual allocations made this month, editable in place.
+  const madeTransfers = useMemo(
+    () => transfers.filter((t) => t.pot_id && Number(t.amount) > 0),
+    [transfers],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -113,10 +131,40 @@ export default function AllocateSheet({
         </div>
 
         <div className="-mx-1 flex-1 space-y-5 overflow-y-auto px-1">
-          {rows.length === 0 && (
+          {/* Already allocated this month: edit or remove in place */}
+          {madeTransfers.length > 0 && (
+            <div>
+              <p className="eyebrow mb-2">Allocated so far</p>
+              <ul className="divide-y divide-[var(--edge)] rounded-[10px] bg-surface-2 px-3">
+                {madeTransfers.map((t) => (
+                  <li key={t.id} className="group flex items-center justify-between gap-3 py-2 text-sm">
+                    <span className="min-w-0 flex-1 truncate text-muted">{potName(t.pot_id)}</span>
+                    <span className="flex items-center gap-2">
+                      <InlineAmount
+                        value={Number(t.amount)}
+                        onCommit={(n) =>
+                          n > 0
+                            ? updateTransfer.mutate({ id: t.id, amount: n })
+                            : deleteTransfer.mutate(t.id)
+                        }
+                        className="text-ink"
+                      />
+                      <RemoveButton onClick={() => deleteTransfer.mutate(t.id)} />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {rows.length === 0 && madeTransfers.length === 0 && (
             <p className="py-8 text-center text-sm text-faint">
               Add income first to see quotas to allocate.
             </p>
+          )}
+
+          {rows.length > 0 && (
+            <p className="eyebrow -mb-2">Add more</p>
           )}
           {rows.map((b) => {
             const potList = byQuota.get(b.key)!;
@@ -137,7 +185,7 @@ export default function AllocateSheet({
                   <span
                     className={`tnum text-xs ${remaining < 0 ? "text-negative" : "text-muted"}`}
                   >
-                    {compact(remaining)} left of {compact(b.allocated)}
+                    {rupee(remaining)} left of {rupee(b.allocated)}
                   </span>
                 </div>
                 <div className="space-y-2">
