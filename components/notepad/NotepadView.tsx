@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { rupee } from "@/lib/format";
+import { InlineText, InlineAmount, RemoveButton } from "@/components/ui/InlineEdit";
 import {
   useNotepad,
   useSaveNotepad,
@@ -13,69 +14,6 @@ import {
 } from "@/lib/hooks/useNotepad";
 
 type LineSection = "big_buys" | "lending" | "studio";
-
-/* ---------- small field primitives (match the app's input styling) ---------- */
-
-function TextInput({
-  value,
-  onChange,
-  placeholder,
-  className = "",
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  className?: string;
-}) {
-  return (
-    <input
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className={`h-9 rounded-[8px] bg-surface-2 px-3 text-sm text-ink outline-none ring-1 ring-edge focus:ring-accent placeholder:text-faint ${className}`}
-    />
-  );
-}
-
-function NumInput({
-  value,
-  onChange,
-  className = "",
-}: {
-  value: number;
-  onChange: (n: number) => void;
-  className?: string;
-}) {
-  return (
-    <div
-      className={`flex h-9 items-center gap-1 rounded-[8px] bg-surface-2 px-3 ring-1 ring-edge focus-within:ring-accent ${className}`}
-    >
-      <span className="text-xs text-faint">₹</span>
-      <input
-        inputMode="numeric"
-        value={value ? value.toLocaleString("en-IN") : ""}
-        onChange={(e) => onChange(parseInt(e.target.value.replace(/\D/g, ""), 10) || 0)}
-        placeholder="0"
-        className="tnum w-full bg-transparent text-right text-sm text-ink outline-none placeholder:text-faint"
-      />
-    </div>
-  );
-}
-
-function DeleteButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      aria-label="Remove"
-      onClick={onClick}
-      className="tap grid size-9 shrink-0 place-items-center rounded-[8px] text-faint ring-1 ring-edge transition-colors hover:text-negative hover:ring-edge-strong"
-    >
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      </svg>
-    </button>
-  );
-}
 
 function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
@@ -100,7 +38,7 @@ function Section({
 }) {
   return (
     <section className="rounded-card bg-surface p-5 ring-1 ring-edge">
-      <div className="mb-3 flex items-baseline justify-between">
+      <div className="mb-2 flex items-baseline justify-between">
         <p className="eyebrow">{title}</p>
         {total != null && (
           <span className="font-display tnum text-sm font-semibold text-accent">
@@ -113,8 +51,7 @@ function Section({
   );
 }
 
-// name / date / amount rows with add + remove (declared at module scope so its
-// inputs keep focus across edits).
+// Read-like list; tap a name, date or amount to edit it in place.
 function LineTable({
   items,
   onSet,
@@ -130,33 +67,34 @@ function LineTable({
 }) {
   return (
     <>
-      <div className="space-y-2">
-        {items.length === 0 && <p className="py-1 text-sm text-faint">Nothing here yet.</p>}
+      <ul className="divide-y divide-[var(--edge)]">
+        {items.length === 0 && <li className="py-2 text-sm text-faint">Nothing here yet.</li>}
         {items.map((it, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <TextInput
+          <li key={i} className="group flex items-center justify-between gap-3 py-2 text-sm">
+            <InlineText
               value={it.name}
-              onChange={(v) => onSet(i, { name: v })}
-              placeholder="Item"
-              className="min-w-0 flex-1"
+              onCommit={(v) => onSet(i, { name: v })}
+              placeholder="Item name"
+              className="min-w-0 flex-1 text-ink"
             />
-            <TextInput
-              value={it.date ?? ""}
-              onChange={(v) => onSet(i, { date: v })}
-              placeholder="dd/mm/yyyy"
-              className="w-28 shrink-0"
-            />
-            <NumInput value={it.amount} onChange={(n) => onSet(i, { amount: n })} className="w-28 shrink-0" />
-            <DeleteButton onClick={() => onRemove(i)} />
-          </div>
+            <span className="flex items-center gap-2">
+              <InlineText
+                value={it.date ?? ""}
+                onCommit={(v) => onSet(i, { date: v })}
+                placeholder="add date"
+                className="text-xs text-faint"
+                inputClassName="w-28 text-xs"
+              />
+              <InlineAmount value={it.amount} onCommit={(n) => onSet(i, { amount: n })} className="text-muted" />
+              <RemoveButton onClick={() => onRemove(i)} />
+            </span>
+          </li>
         ))}
-      </div>
+      </ul>
       <AddButton label={addLabel} onClick={onAdd} />
     </>
   );
 }
-
-/* ---------- the view ---------- */
 
 export default function NotepadView() {
   const { data, isLoading } = useNotepad();
@@ -175,9 +113,8 @@ export default function NotepadView() {
     );
   }
 
-  const live = withTotals(working); // totals recomputed for display
+  const live = withTotals(working);
 
-  /* line-item section helpers */
   const setLine = (s: LineSection, i: number, patch: Partial<LineItem>) =>
     setDraft({
       ...working,
@@ -188,7 +125,6 @@ export default function NotepadView() {
   const removeLine = (s: LineSection, i: number) =>
     setDraft({ ...working, [s]: { ...working[s], items: working[s].items.filter((_, x) => x !== i) } });
 
-  /* fund-manager helpers */
   const setFm = (i: number, patch: Partial<FundManager>) =>
     setDraft({ ...working, fund_managers: working.fund_managers.map((f, x) => (x === i ? { ...f, ...patch } : f)) });
   const addFm = () =>
@@ -224,7 +160,7 @@ export default function NotepadView() {
 
       <h1 className="font-display mb-1 text-2xl font-bold text-ink">Notepad</h1>
       <p className="mb-5 text-sm text-muted">
-        Fund managers, big buys, studio setup, and lending. Everything here is yours to edit.
+        Tap any name, date or amount to edit it. Hover a row to remove it.
       </p>
 
       <div className="space-y-4">
@@ -235,24 +171,39 @@ export default function NotepadView() {
               <p className="py-1 text-sm text-faint">No fund managers yet.</p>
             )}
             {working.fund_managers.map((fm, i) => (
-              <div key={i} className="rounded-button bg-surface-2 p-3.5">
-                <div className="mb-2 flex items-center gap-2">
-                  <TextInput
+              <div key={i} className="group rounded-button bg-surface-2 p-4">
+                <div className="flex items-baseline justify-between gap-2">
+                  <InlineText
                     value={fm.name}
-                    onChange={(v) => setFm(i, { name: v })}
+                    onCommit={(v) => setFm(i, { name: v })}
                     placeholder="Name"
-                    className="min-w-0 flex-1 !bg-surface"
+                    className="min-w-0 flex-1 font-medium text-ink"
                   />
-                  <NumInput value={fm.amount} onChange={(n) => setFm(i, { amount: n })} className="w-32 shrink-0 !bg-surface" />
-                  <DeleteButton onClick={() => removeFm(i)} />
+                  <span className="flex items-center gap-2">
+                    <InlineAmount value={fm.amount} onCommit={(n) => setFm(i, { amount: n })} className="text-sm text-accent" />
+                    <RemoveButton onClick={() => removeFm(i)} />
+                  </span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  <TextInput value={fm.type} onChange={(v) => setFm(i, { type: v })} placeholder="Type" className="!bg-surface" />
-                  <TextInput value={fm.platform} onChange={(v) => setFm(i, { platform: v })} placeholder="Platform" className="!bg-surface" />
-                  <TextInput value={fm.split} onChange={(v) => setFm(i, { split: v })} placeholder="Split" className="!bg-surface" />
-                  <TextInput value={fm.date} onChange={(v) => setFm(i, { date: v })} placeholder="Invested" className="!bg-surface" />
-                  <TextInput value={fm.maturity} onChange={(v) => setFm(i, { maturity: v })} placeholder="Matures" className="!bg-surface" />
-                  <TextInput value={fm.returns} onChange={(v) => setFm(i, { returns: v })} placeholder="Returns" className="!bg-surface" />
+                <p className="mt-0.5 flex flex-wrap items-center gap-x-1 text-xs text-muted">
+                  <InlineText value={fm.type} onCommit={(v) => setFm(i, { type: v })} placeholder="Type" />
+                  <span className="text-faint">·</span>
+                  <InlineText value={fm.platform} onCommit={(v) => setFm(i, { platform: v })} placeholder="Platform" />
+                  <span className="text-faint">·</span>
+                  <InlineText value={fm.split} onCommit={(v) => setFm(i, { split: v })} placeholder="Split" />
+                </p>
+                <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-faint">
+                  <span className="flex items-center gap-1">
+                    Invested
+                    <InlineText value={fm.date} onCommit={(v) => setFm(i, { date: v })} placeholder="date" />
+                  </span>
+                  <span className="flex items-center gap-1">
+                    Matures
+                    <InlineText value={fm.maturity} onCommit={(v) => setFm(i, { maturity: v })} placeholder="date" />
+                  </span>
+                  <span className="flex items-center gap-1">
+                    Returns
+                    <InlineText value={fm.returns} onCommit={(v) => setFm(i, { returns: v })} placeholder="add" />
+                  </span>
                 </div>
               </div>
             ))}
@@ -297,26 +248,29 @@ export default function NotepadView() {
       {/* Sticky save bar (only when there are unsaved edits) */}
       {dirty && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-edge bg-bg/90 px-4 py-3 backdrop-blur-md">
-          <div className="mx-auto flex max-w-3xl items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setDraft(null)}
-              disabled={save.isPending}
-              className="tap rounded-[10px] px-4 py-2.5 text-sm text-muted ring-1 ring-edge hover:text-ink disabled:opacity-50"
-            >
-              Discard
-            </button>
-            <button
-              type="button"
-              onClick={async () => {
-                await save.mutateAsync(working);
-                setDraft(null);
-              }}
-              disabled={save.isPending}
-              className="tap rounded-[10px] bg-accent px-5 py-2.5 text-sm font-semibold text-[#14100E] shadow-[0_8px_24px_-10px_rgba(205,163,73,0.7)] transition-all hover:brightness-105 disabled:opacity-50"
-            >
-              {save.isPending ? "Saving…" : "Save changes"}
-            </button>
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-2">
+            <span className="text-xs text-muted">Unsaved changes</span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setDraft(null)}
+                disabled={save.isPending}
+                className="tap rounded-[10px] px-4 py-2.5 text-sm text-muted ring-1 ring-edge hover:text-ink disabled:opacity-50"
+              >
+                Discard
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await save.mutateAsync(working);
+                  setDraft(null);
+                }}
+                disabled={save.isPending}
+                className="tap rounded-[10px] bg-accent px-5 py-2.5 text-sm font-semibold text-[#14100E] shadow-[0_8px_24px_-10px_rgba(205,163,73,0.7)] transition-all hover:brightness-105 disabled:opacity-50"
+              >
+                {save.isPending ? "Saving…" : "Save changes"}
+              </button>
+            </div>
           </div>
         </div>
       )}

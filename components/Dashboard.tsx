@@ -7,6 +7,7 @@ import NetWorthHero from "@/components/hero/NetWorthHero";
 import StatTrio from "@/components/stats/StatTrio";
 import QuotaRings from "@/components/rings/QuotaRings";
 import Flow from "@/components/flow/Flow";
+import EntriesList from "@/components/entries/EntriesList";
 import IncomeHeatmap from "@/components/heatmap/IncomeHeatmap";
 import PotCards from "@/components/pots/PotCards";
 import MonthSwitcher from "@/components/month-switcher/MonthSwitcher";
@@ -76,6 +77,7 @@ export default function Dashboard() {
   const sections: ReactNode[] = [
     <NetWorthHero key="hero" value={worth} prevValue={data?.prevNetWorth ?? null} />,
     <StatTrio key="stats" earned={earned} spent={spent} balance={balance} moved={moved} />,
+    <EntriesList key="entries" income={income} expenses={expenses} ym={ym} />,
     <QuotaRings
       key="rings"
       buckets={buckets}

@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { currentYm, dateForYm } from "@/lib/logic";
 
 const supabase = supabaseBrowser();
 
@@ -32,23 +33,42 @@ export type Split = {
   personal: number;
 };
 
-// Persist the chosen split and seed starter pots, then unblock the dashboard.
+export type FixedExpense = { label: string; amount: number };
+
+// Persist the chosen split, seed starter pots, and log the user's fixed
+// expenses for the current month (as bills, so they show up in Spent), then
+// unblock the dashboard.
 export function useFinishOnboarding() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (s: Split) => {
+    mutationFn: async ({ split, fixed }: { split: Split; fixed: FixedExpense[] }) => {
       const { error } = await supabase.rpc("set_user_quota", {
-        p_bills: s.bills,
-        p_invest: s.invest,
-        p_emergency: s.emergency,
-        p_personal: s.personal,
+        p_bills: split.bills,
+        p_invest: split.invest,
+        p_emergency: split.emergency,
+        p_personal: split.personal,
       });
       if (error) throw error;
       await supabase.rpc("ensure_default_pots"); // no-op if pots already exist
+
+      const p_date = dateForYm(currentYm());
+      for (const f of fixed) {
+        if (f.amount <= 0 || !f.label.trim()) continue;
+        const { error: exErr } = await supabase.rpc("add_expense", {
+          p_amount: f.amount,
+          p_bucket: "bills",
+          p_category: f.label.trim(),
+          p_note: "Fixed expense",
+          p_date,
+        });
+        if (exErr) throw exErr;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["needs-onboarding"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["monthly-totals"] });
+      qc.invalidateQueries({ queryKey: ["income-months"] });
     },
   });
 }

@@ -243,7 +243,7 @@ export default function QuickAdd({
                     onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
                     onKeyDown={(e) => e.key === "Enter" && submit()}
                     placeholder="0"
-                    className="font-display tnum h-full w-full bg-transparent text-3xl text-ink outline-none placeholder:text-faint"
+                    className="font-display tnum h-full w-full bg-transparent px-1 text-3xl text-ink outline-none placeholder:text-faint"
                   />
                 </div>
               </div>
