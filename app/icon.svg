@@ -11,8 +11,6 @@
   </defs>
   <rect width="96" height="96" rx="22" fill="url(#bg)"/>
   <g fill="none" stroke="url(#g)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M27 79 L48 19 L69 79"/>
-    <path stroke-width="9" d="M33 46 L66 46"/>
-    <path stroke-width="9" d="M32 62 L61 62"/>
+    <path d="M26 78 L48 21 L70 78"/>
   </g>
 </svg>
