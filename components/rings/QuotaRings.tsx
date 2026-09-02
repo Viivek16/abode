@@ -73,7 +73,7 @@ export default function QuotaRings({
       <div className="mb-5 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="eyebrow">Allocated this month</p>
-          <p className="font-display mt-1.5 text-[clamp(1.35rem,6vw,1.95rem)] font-semibold leading-none tracking-tight text-ink">
+          <p className="font-display mt-1.5 text-[clamp(1.35rem,6vw,1.95rem)] font-semibold leading-[1.22] tracking-tight text-ink">
             <span className="tnum text-accent">{rupee(moved)}</span>
             <span className="text-muted"> of </span>
             <span className="tnum">{rupee(earned)}</span>
@@ -83,9 +83,19 @@ export default function QuotaRings({
           <button
             type="button"
             onClick={onAllocate}
-            className="tap shrink-0 rounded-[8px] px-3 py-1.5 text-xs font-medium text-accent ring-1 ring-accent/30 transition-colors hover:bg-accent/10"
+            className="tap group inline-flex shrink-0 items-center gap-1.5 rounded-pill bg-accent/10 px-3.5 py-1.5 text-xs font-medium text-accent ring-1 ring-inset ring-accent/20 transition-colors hover:bg-accent/[0.16]"
           >
-            Allocate →
+            Allocate
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden
+              className="transition-transform duration-200 ease-out group-hover:translate-x-0.5"
+            >
+              <path d="M5 12h13M12 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
         )}
       </div>

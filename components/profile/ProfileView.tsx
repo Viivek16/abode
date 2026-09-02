@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { rupee } from "@/lib/format";
 import { useProfile } from "@/lib/hooks/useProfile";
+import TopNav from "@/components/nav/TopNav";
 
 const initials = (name: string) =>
   name
@@ -32,57 +32,75 @@ function Avatar({ src, name }: { src: string | null; name: string }) {
   );
 }
 
-// A distinct, minimal line-mark per tier — drawn in the tier's own colour.
-function TierIcon({ tierKey, color }: { tierKey: string; color: string }) {
-  const common = {
-    width: 26,
-    height: 26,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: color,
-    strokeWidth: 1.7,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    "aria-hidden": true,
-  };
+// The engraved symbol per tier, in a 0..24 box (centred by the badge).
+function tierSymbol(tierKey: string) {
   switch (tierKey) {
     case "strategist": // precision — a target
       return (
-        <svg {...common}>
+        <>
           <circle cx="12" cy="12" r="8.5" />
           <circle cx="12" cy="12" r="4" />
-          <circle cx="12" cy="12" r="1" fill={color} stroke="none" />
-        </svg>
+          <circle cx="12" cy="12" r="1.1" fill="#fff" stroke="none" />
+        </>
       );
     case "saver": // safety net — a shield with a check
       return (
-        <svg {...common}>
+        <>
           <path d="M12 3.2l7 2.4v5c0 4.4-3 7.4-7 8.9-4-1.5-7-4.5-7-8.9v-5l7-2.4z" />
           <path d="M9 12l2.1 2.1L15 10" />
-        </svg>
+        </>
       );
     case "spender": // free spirit — a spark
-      return (
-        <svg {...common}>
-          <path d="M12 3l1.9 5.6L19.5 10l-5.6 1.4L12 17l-1.9-5.6L4.5 10l5.6-1.4L12 3z" />
-          <circle cx="18.5" cy="17.5" r="1.15" fill={color} stroke="none" />
-        </svg>
-      );
+      return <path d="M12 3l1.9 5.6L19.5 10l-5.6 1.4L12 17l-1.9-5.6L4.5 10l5.6-1.4L12 3z" />;
     case "risk-taker": // energy / risk — a bolt
-      return (
-        <svg {...common}>
-          <path d="M13 2.5L5 13.5h5.5L9.5 21.5 19 10.5h-5.5l0.5-8z" />
-        </svg>
-      );
+      return <path d="M13 2.5L5 13.5h5.5L9.5 21.5 19 10.5h-5.5l0.5-8z" />;
     default: // builder — a stack of blocks
       return (
-        <svg {...common}>
+        <>
           <rect x="4" y="13.5" width="16" height="5.5" rx="1.4" />
           <rect x="6.5" y="8" width="11" height="5" rx="1.4" />
           <rect x="9" y="2.5" width="6" height="5" rx="1.4" />
-        </svg>
+        </>
       );
   }
+}
+
+// A premium coin-style medallion: the tier colour lit from top-left with a
+// radial sheen and cast shadow for real depth, the symbol embossed in white.
+function TierBadge({ tierKey, color }: { tierKey: string; color: string }) {
+  const k = tierKey;
+  return (
+    <svg viewBox="0 0 56 56" className="size-14 shrink-0 drop-shadow-[0_6px_10px_rgba(0,0,0,0.45)]" aria-hidden>
+      <defs>
+        <radialGradient id={`tb-face-${k}`} cx="34%" cy="26%" r="82%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.55" />
+          <stop offset="42%" stopColor="#ffffff" stopOpacity="0.05" />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0.45" />
+        </radialGradient>
+        <filter id={`tb-emb-${k}`} x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="1" stdDeviation="0.7" floodColor="#000000" floodOpacity="0.45" />
+        </filter>
+      </defs>
+      {/* coin face + top-left sheen */}
+      <circle cx="28" cy="28" r="25" fill={color} />
+      <circle cx="28" cy="28" r="25" fill={`url(#tb-face-${k})`} />
+      {/* rim: bright top edge, dark inner bevel */}
+      <circle cx="28" cy="28" r="25" fill="none" stroke="#ffffff" strokeOpacity="0.32" strokeWidth="1" />
+      <circle cx="28" cy="28" r="21" fill="none" stroke="#000000" strokeOpacity="0.14" strokeWidth="1" />
+      {/* embossed symbol */}
+      <g
+        transform="translate(16 16)"
+        stroke="#ffffff"
+        strokeWidth="1.9"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        filter={`url(#tb-emb-${k})`}
+      >
+        {tierSymbol(k)}
+      </g>
+    </svg>
+  );
 }
 
 function ShareBar({ label, value, income, color }: { label: string; value: number; income: number; color: string }) {
@@ -113,18 +131,7 @@ export default function ProfileView() {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 pb-20 pt-5">
-      <header className="mb-6 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <p className="font-display text-lg font-bold text-ink">Abode</p>
-          <Link href="/" className="text-xs text-muted hover:text-ink">
-            Dashboard
-          </Link>
-          <Link href="/notepad" className="text-xs text-muted hover:text-ink">
-            Notepad
-          </Link>
-          <span className="text-xs font-medium text-accent">Profile</span>
-        </div>
-      </header>
+      <TopNav />
 
       {isLoading || !data ? (
         <p className="text-sm text-faint">Loading…</p>
@@ -147,12 +154,7 @@ export default function ProfileView() {
             }}
           >
             <div className="relative z-10 flex items-center gap-4">
-              <span
-                className="grid size-14 shrink-0 place-items-center rounded-pill"
-                style={{ background: `color-mix(in oklab, ${data.tier.color} 24%, transparent)`, boxShadow: `0 0 0 1px color-mix(in oklab, ${data.tier.color} 45%, transparent)` }}
-              >
-                <TierIcon tierKey={data.tier.key} color={data.tier.color} />
-              </span>
+              <TierBadge tierKey={data.tier.key} color={data.tier.color} />
               <div className="min-w-0">
                 <p className="eyebrow">Your tier</p>
                 <p className="font-display text-xl font-semibold text-ink">{data.tier.name}</p>
@@ -187,11 +189,14 @@ export default function ProfileView() {
             )}
           </section>
 
-          <form action="/auth/signout" method="post">
+          <form action="/auth/signout" method="post" className="flex justify-center pt-1">
             <button
               type="submit"
-              className="tap w-full rounded-[12px] py-3 text-sm font-medium text-muted ring-1 ring-edge transition-colors hover:text-negative hover:ring-edge-strong"
+              className="tap inline-flex items-center gap-2 rounded-pill px-5 py-2.5 text-sm font-medium text-muted ring-1 ring-edge transition-colors hover:text-negative hover:ring-edge-strong"
             >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M16 17l5-5-5-5M21 12H9M12 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
               Sign out
             </button>
           </form>

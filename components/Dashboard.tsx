@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import NetWorthHero from "@/components/hero/NetWorthHero";
 import StatTrio from "@/components/stats/StatTrio";
@@ -12,7 +11,7 @@ import IncomeHeatmap from "@/components/heatmap/IncomeHeatmap";
 import PotCards from "@/components/pots/PotCards";
 import MonthSwitcher from "@/components/month-switcher/MonthSwitcher";
 import NotepadStrip from "@/components/notepad/NotepadStrip";
-import ProfileButton from "@/components/profile/ProfileButton";
+import TopNav from "@/components/nav/TopNav";
 import QuickAdd from "@/components/quick-add/QuickAdd";
 import AllocateSheet from "@/components/allocate/AllocateSheet";
 import Toast from "@/components/ui/Toast";
@@ -109,27 +108,12 @@ export default function Dashboard() {
 
   return (
     <main className="relative z-10 mx-auto w-full max-w-3xl px-4 pb-28 pt-6">
-      {/* Header */}
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-        <div className="flex items-center gap-4">
-          <p className="font-display text-xl font-semibold tracking-tight text-ink">
-            Abode
-          </p>
-          <span className="rounded-pill bg-accent/10 px-2.5 py-1 text-xs font-medium text-accent">
-            Dashboard
-          </span>
-          <Link
-            href="/notepad"
-            className="text-xs text-muted transition-colors hover:text-ink"
-          >
-            Notepad
-          </Link>
-        </div>
-        <div className="flex items-center gap-2">
-          <MonthSwitcher ym={ym} onShift={(d) => setPicked(shiftYm(ym, d))} />
-          <ProfileButton />
-        </div>
-      </header>
+      <TopNav />
+
+      {/* Month scroller — its own centred row so the top bar stays minimal */}
+      <div className="mb-5 flex justify-center">
+        <MonthSwitcher ym={ym} onShift={(d) => setPicked(shiftYm(ym, d))} />
+      </div>
 
       {isLoading && !data ? (
         <DashboardSkeleton />
