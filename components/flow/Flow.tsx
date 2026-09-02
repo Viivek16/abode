@@ -1,63 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, type CSSProperties } from "react";
 import { rupee } from "@/lib/format";
 import type { BucketKey, BucketView, Pot, Transfer } from "@/lib/types";
 
-const MQ = "(prefers-reduced-motion: reduce)";
-// Subscribe to the reduced-motion preference without setState-in-effect.
-function useMotionOK() {
-  return useSyncExternalStore(
-    (cb) => {
-      const m = window.matchMedia(MQ);
-      m.addEventListener("change", cb);
-      return () => m.removeEventListener("change", cb);
-    },
-    () => !window.matchMedia(MQ).matches,
-    () => true,
-  );
-}
+type PotSlice = { name: string; color: string; amount: number };
 
-// A single proportional bar: a faded "quota" track with a bright "moved into
-// pots" fill that grows in (scaleX, so it stays on the GPU) from the left.
-function Bar({
-  widthPct,
-  fillPct,
-  color,
-  faded,
-  ready,
-  delay,
-  animate,
-}: {
-  widthPct: number; // bar length as a share of income (0..100)
-  fillPct: number; // bright share of THIS bar (0..100)
-  color: string;
-  faded: string;
-  ready: boolean;
-  delay: number;
-  animate: boolean;
-}) {
-  return (
-    <div
-      className="mt-1.5 h-3 overflow-hidden rounded-pill"
-      style={{ width: `${Math.max(widthPct, 2.5)}%`, background: faded }}
-    >
-      <div
-        className="h-full origin-left rounded-pill"
-        style={{
-          width: `${fillPct}%`,
-          background: color,
-          transform: animate ? `scaleX(${ready ? 1 : 0})` : "none",
-          transition: animate
-            ? "transform .9s cubic-bezier(.22,1,.36,1)"
-            : undefined,
-          transitionDelay: `${delay}ms`,
-        }}
-      />
-    </div>
-  );
-}
-
+// A partition / icicle view of the month: income (left) splits into quota
+// buckets (middle, height ∝ allocated), and each bucket splits again into the
+// pots it funded plus whatever is still unallocated (right). Pure-DOM flex so
+// it stays crisp and never overflows on a phone.
 export default function Flow({
   earned,
   buckets,
@@ -73,45 +25,41 @@ export default function Flow({
   selected: BucketKey | null;
   onSelect: (k: BucketKey | null) => void;
 }) {
-  const motion = useMotionOK();
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setReady(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-
-  // Funded pots, in bucket order, for the closing "Pots" strip.
-  const potChips = useMemo(() => {
-    const order = new Map(buckets.map((b, i) => [b.key, i]));
-    const byPot = new Map<string, { amount: number; rank: number }>();
+  const potsByBucket = useMemo(() => {
+    const meta = new Map(pots.map((p) => [p.id, p]));
+    const agg = new Map<string, { amount: number; bucket: string; potId: string }>();
     for (const t of transfers) {
       if (!t.pot_id || Number(t.amount) <= 0) continue;
-      const cur = byPot.get(t.pot_id) ?? {
-        amount: 0,
-        rank: order.get(t.quota_key as BucketKey) ?? 99,
-      };
+      const cur = agg.get(t.pot_id) ?? { amount: 0, bucket: t.quota_key as string, potId: t.pot_id };
       cur.amount += Number(t.amount);
-      byPot.set(t.pot_id, cur);
+      agg.set(t.pot_id, cur);
     }
-    const potById = new Map(pots.map((p) => [p.id, p]));
-    return [...byPot.entries()]
-      .map(([id, v]) => ({
-        id,
+    const byBucket = new Map<string, PotSlice[]>();
+    for (const v of agg.values()) {
+      const arr = byBucket.get(v.bucket) ?? [];
+      arr.push({
+        name: meta.get(v.potId)?.name ?? "Pot",
+        color: meta.get(v.potId)?.color ?? "var(--muted)",
         amount: v.amount,
-        rank: v.rank,
-        name: potById.get(id)?.name ?? "Pot",
-        color: potById.get(id)?.color ?? "var(--muted)",
-      }))
-      .sort((a, b) => a.rank - b.rank || b.amount - a.amount);
-  }, [transfers, pots, buckets]);
+      });
+      byBucket.set(v.bucket, arr);
+    }
+    for (const arr of byBucket.values()) arr.sort((a, b) => b.amount - a.amount);
+    return byBucket;
+  }, [transfers, pots]);
 
-  const barWidth = (v: number) => (earned > 0 ? (v / earned) * 100 : 0);
+  // Label visibility from each block's share of income, so tiny slivers stay
+  // clean (colour only) instead of clipping text.
+  const frac = (v: number) => (earned > 0 ? v / earned : 0);
+  const showName = (v: number) => frac(v) >= 0.05;
+  const showAmt = (v: number) => frac(v) >= 0.1;
+  const grow = { transition: "flex-grow .7s cubic-bezier(.22,1,.36,1)" } as const;
 
   return (
     <section className="glass p-6">
-      <div className="mb-5">
+      <div className="mb-4">
         <p className="eyebrow">The flow</p>
-        <p className="mt-1 text-sm text-muted">Where this month&rsquo;s income goes</p>
+        <p className="mt-1 text-sm text-muted">Income splits into buckets, then into pots</p>
       </div>
 
       {earned <= 0 ? (
@@ -119,87 +67,102 @@ export default function Flow({
           Add income for this month to see the flow.
         </p>
       ) : (
-        <div className="space-y-4">
-          {/* Income — the source, full width */}
-          <div>
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="text-sm font-medium text-ink">Income</span>
-              <span className="tnum text-sm font-semibold text-accent">{rupee(earned)}</span>
-            </div>
-            <Bar
-              widthPct={100}
-              fillPct={100}
-              color="var(--accent)"
-              faded="color-mix(in oklab, var(--accent) 16%, transparent)"
-              ready={ready}
-              delay={0}
-              animate={motion}
-            />
+        <>
+          <div className="mb-2 flex gap-2">
+            <span className="w-[52px] shrink-0 text-[9px] font-semibold uppercase tracking-[0.14em] text-faint sm:w-16">
+              Income
+            </span>
+            <span className="flex-[1.05] text-[9px] font-semibold uppercase tracking-[0.14em] text-faint">
+              Buckets
+            </span>
+            <span className="flex-[1.35] text-[9px] font-semibold uppercase tracking-[0.14em] text-faint">
+              Pots · unallocated
+            </span>
           </div>
 
-          {/* Buckets — each bar's length is its share of income; the bright part
-              is what has actually been moved into pots. */}
-          <div className="space-y-3 border-l border-edge pl-4">
-            {buckets.map((b, i) => {
-              const dim = selected != null && selected !== b.key;
-              const barColor = b.over ? "var(--negative)" : b.color;
-              return (
-                <button
-                  key={b.key}
-                  type="button"
-                  aria-pressed={selected === b.key}
-                  onClick={() => onSelect(selected === b.key ? null : b.key)}
-                  className="tap block w-full text-left transition-opacity"
-                  style={{ opacity: dim ? 0.35 : 1 }}
-                >
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="flex items-center gap-2 text-sm text-ink">
-                      <span
-                        className="inline-block size-2.5 shrink-0 rounded-pill"
-                        style={{ background: barColor }}
-                      />
-                      {b.name}
-                      {b.over && (
-                        <span className="text-xs font-medium text-negative">over</span>
-                      )}
-                    </span>
-                    <span className="tnum shrink-0 text-[11px] text-muted">
-                      {rupee(b.moved)} <span className="text-faint">/ {rupee(b.allocated)}</span>
-                    </span>
+          <div className="flex h-[300px] gap-2">
+            {/* Income — the source */}
+            <div className="flex w-[52px] shrink-0 items-center justify-center rounded-[10px] bg-accent sm:w-16">
+              <span className="font-display rotate-180 whitespace-nowrap text-[13px] font-semibold text-[#14100E] [writing-mode:vertical-rl]">
+                {rupee(earned)}
+              </span>
+            </div>
+
+            {/* Buckets — height ∝ allocated */}
+            <div className="flex flex-[1.05] flex-col gap-1.5">
+              {buckets.map((b) => {
+                const dim = selected != null && selected !== b.key;
+                return (
+                  <button
+                    key={b.key}
+                    type="button"
+                    aria-pressed={selected === b.key}
+                    onClick={() => onSelect(selected === b.key ? null : b.key)}
+                    className="tap flex min-h-0 flex-col justify-center overflow-hidden rounded-[9px] px-2.5 text-left transition-opacity"
+                    style={{ flexGrow: b.allocated, background: b.color, opacity: dim ? 0.4 : 1, ...grow } as CSSProperties}
+                  >
+                    {showName(b.allocated) && (
+                      <span className="truncate text-[12px] font-semibold leading-tight text-[#14100E]">
+                        {b.name}
+                      </span>
+                    )}
+                    {showAmt(b.allocated) && (
+                      <span className="tnum truncate text-[10.5px] leading-tight text-[#14100E]/75">
+                        {rupee(b.allocated)}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Pots + unallocated — each bucket zone splits again */}
+            <div className="flex flex-[1.35] flex-col gap-1.5">
+              {buckets.map((b) => {
+                const slices = potsByBucket.get(b.key) ?? [];
+                const rem = Math.max(b.allocated - b.moved, 0);
+                const dim = selected != null && selected !== b.key;
+                return (
+                  <div
+                    key={b.key}
+                    className="flex min-h-0 flex-col gap-px overflow-hidden rounded-[9px] transition-opacity"
+                    style={{ flexGrow: b.allocated, opacity: dim ? 0.4 : 1, ...grow } as CSSProperties}
+                  >
+                    {slices.map((p, i) => (
+                      <div
+                        key={i}
+                        className="flex min-h-0 items-center overflow-hidden px-2.5"
+                        style={{ flexGrow: p.amount, background: p.color, ...grow } as CSSProperties}
+                      >
+                        {showName(p.amount) && (
+                          <span className="truncate text-[11px] font-medium text-[#14100E]">
+                            {p.name}
+                            {showAmt(p.amount) && (
+                              <span className="tnum font-normal text-[#14100E]/70"> · {rupee(p.amount)}</span>
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                    {rem > 0 && (
+                      <div
+                        className="flex min-h-0 items-center overflow-hidden px-2.5"
+                        style={{ flexGrow: rem, background: `color-mix(in oklab, ${b.color} 14%, transparent)`, ...grow } as CSSProperties}
+                      >
+                        {showName(rem) && (
+                          <span className="truncate text-[10.5px] text-muted">
+                            Unallocated
+                            {showAmt(rem) && <span className="tnum"> · {rupee(rem)}</span>}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <Bar
-                    widthPct={barWidth(b.allocated)}
-                    fillPct={Math.round(b.fill * 100)}
-                    color={barColor}
-                    faded={`color-mix(in oklab, ${b.color} 15%, transparent)`}
-                    ready={ready}
-                    delay={80 + i * 60}
-                    animate={motion}
-                  />
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Pots — the destinations that actually received money */}
-          {potChips.length > 0 && (
-            <div className="border-t border-edge pt-4">
-              <p className="eyebrow mb-2.5">Pots</p>
-              <div className="flex flex-wrap gap-x-4 gap-y-2">
-                {potChips.map((p) => (
-                  <span key={p.id} className="flex items-center gap-2 text-sm">
-                    <span
-                      className="inline-block size-2.5 shrink-0 rounded-pill"
-                      style={{ background: p.color }}
-                    />
-                    <span className="text-muted">{p.name}</span>
-                    <span className="tnum font-medium text-ink">{rupee(p.amount)}</span>
-                  </span>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          )}
-        </div>
+          </div>
+        </>
       )}
     </section>
   );
