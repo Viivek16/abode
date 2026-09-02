@@ -63,8 +63,9 @@ export type BucketView = {
   key: BucketKey;
   name: string;
   color: string;
-  allocated: number;
-  spent: number;
-  fill: number; // 0..1
-  over: boolean;
+  allocated: number; // quota target = pct * income
+  spent: number; // expenses filed to this bucket
+  moved: number; // allocated into pots under this bucket this month
+  fill: number; // 0..1 (moved / allocated)
+  over: boolean; // moved > allocated
 };

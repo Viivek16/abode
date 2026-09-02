@@ -4,28 +4,40 @@ import { InlineText, InlineAmount, RemoveButton } from "@/components/ui/InlineEd
 import {
   useDeleteExpense,
   useDeleteIncome,
+  useDeleteTransfer,
   useUpdateExpense,
   useUpdateIncome,
+  useUpdateTransfer,
 } from "@/lib/hooks/useDashboard";
-import type { ExpenseEntry, IncomeEntry } from "@/lib/types";
+import type { ExpenseEntry, IncomeEntry, Pot, Transfer } from "@/lib/types";
 
 const isTemp = (id: string) => id.startsWith("temp-");
 
 export default function EntriesList({
   income,
   expenses,
+  transfers,
+  pots,
   ym,
 }: {
   income: IncomeEntry[];
   expenses: ExpenseEntry[];
+  transfers: Transfer[];
+  pots: Pot[];
   ym: string;
 }) {
   const updateIncome = useUpdateIncome(ym);
   const deleteIncome = useDeleteIncome(ym);
   const updateExpense = useUpdateExpense();
   const deleteExpense = useDeleteExpense();
+  const updateTransfer = useUpdateTransfer(ym);
+  const deleteTransfer = useDeleteTransfer(ym);
 
-  const empty = income.length === 0 && expenses.length === 0;
+  const potName = (id: string | null) =>
+    pots.find((p) => p.id === id)?.name ?? "Pot";
+
+  const empty =
+    income.length === 0 && expenses.length === 0 && transfers.length === 0;
 
   return (
     <section className="glass p-6">
@@ -124,6 +136,39 @@ export default function EntriesList({
                         className="text-negative"
                       />
                       <RemoveButton onClick={() => deleteExpense.mutate(r.id)} />
+                    </>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {transfers.length > 0 && (
+        <>
+          <p className="mb-1 mt-4 text-xs font-medium text-muted">Allocations</p>
+          <ul className="divide-y divide-[var(--edge)]">
+            {transfers.map((r) => (
+              <li
+                key={r.id}
+                className="group -mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 text-sm transition-colors focus-within:bg-surface-2/60"
+              >
+                <span className="min-w-0 flex-1 truncate text-ink">
+                  <span className="text-faint">→ </span>
+                  {potName(r.pot_id)}
+                </span>
+                <span className="flex items-center gap-2">
+                  {isTemp(r.id) ? (
+                    <span className="tnum text-accent">₹{Number(r.amount).toLocaleString("en-IN")}</span>
+                  ) : (
+                    <>
+                      <InlineAmount
+                        value={Number(r.amount)}
+                        onCommit={(n) => updateTransfer.mutate({ id: r.id, amount: n })}
+                        className="text-accent"
+                      />
+                      <RemoveButton onClick={() => deleteTransfer.mutate(r.id)} />
                     </>
                   )}
                 </span>

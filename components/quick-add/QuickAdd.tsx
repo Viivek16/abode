@@ -154,7 +154,7 @@ export default function QuickAdd({
             role="dialog"
             aria-modal="true"
             aria-label="Add entry"
-            className="glass glass-2 relative w-full max-w-md rounded-t-card p-6 pb-7 sm:rounded-card"
+            className="glass glass-2 relative max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-card p-6 pb-7 sm:rounded-card"
             style={{
               transform: shown ? "translateY(0)" : "translateY(100%)",
               transition: "transform .4s var(--ease-drawer)",

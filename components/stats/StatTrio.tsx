@@ -43,7 +43,7 @@ export default function StatTrio({
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       <Stat label="Income" value={earned} tone="text-ink" />
       <Stat label="Spent" value={spent} tone="text-negative" />
-      <Stat label="Balance" value={balance} tone="text-positive" hint="Income − Spent − Allocated" />
+      <Stat label="Savings" value={balance} tone="text-positive" hint="Income − Spent − Allocated" />
       <Stat label="Allocated" value={moved} tone="text-accent" hint="Moved into pots" />
     </div>
   );

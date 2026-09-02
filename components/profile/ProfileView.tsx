@@ -32,6 +32,59 @@ function Avatar({ src, name }: { src: string | null; name: string }) {
   );
 }
 
+// A distinct, minimal line-mark per tier — drawn in the tier's own colour.
+function TierIcon({ tierKey, color }: { tierKey: string; color: string }) {
+  const common = {
+    width: 26,
+    height: 26,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: color,
+    strokeWidth: 1.7,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+  switch (tierKey) {
+    case "strategist": // precision — a target
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="8.5" />
+          <circle cx="12" cy="12" r="4" />
+          <circle cx="12" cy="12" r="1" fill={color} stroke="none" />
+        </svg>
+      );
+    case "saver": // safety net — a shield with a check
+      return (
+        <svg {...common}>
+          <path d="M12 3.2l7 2.4v5c0 4.4-3 7.4-7 8.9-4-1.5-7-4.5-7-8.9v-5l7-2.4z" />
+          <path d="M9 12l2.1 2.1L15 10" />
+        </svg>
+      );
+    case "spender": // free spirit — a spark
+      return (
+        <svg {...common}>
+          <path d="M12 3l1.9 5.6L19.5 10l-5.6 1.4L12 17l-1.9-5.6L4.5 10l5.6-1.4L12 3z" />
+          <circle cx="18.5" cy="17.5" r="1.15" fill={color} stroke="none" />
+        </svg>
+      );
+    case "risk-taker": // energy / risk — a bolt
+      return (
+        <svg {...common}>
+          <path d="M13 2.5L5 13.5h5.5L9.5 21.5 19 10.5h-5.5l0.5-8z" />
+        </svg>
+      );
+    default: // builder — a stack of blocks
+      return (
+        <svg {...common}>
+          <rect x="4" y="13.5" width="16" height="5.5" rx="1.4" />
+          <rect x="6.5" y="8" width="11" height="5" rx="1.4" />
+          <rect x="9" y="2.5" width="6" height="5" rx="1.4" />
+        </svg>
+      );
+  }
+}
+
 function ShareBar({ label, value, income, color }: { label: string; value: number; income: number; color: string }) {
   const pct = income > 0 ? Math.min(Math.round((value / income) * 100), 100) : 0;
   return (
@@ -98,13 +151,7 @@ export default function ProfileView() {
                 className="grid size-14 shrink-0 place-items-center rounded-pill"
                 style={{ background: `color-mix(in oklab, ${data.tier.color} 24%, transparent)`, boxShadow: `0 0 0 1px color-mix(in oklab, ${data.tier.color} 45%, transparent)` }}
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <path
-                    d="M12 2l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 21l-5.2 2.7 1-5.8L3.6 8.1l5.8-.8L12 2z"
-                    fill={data.tier.color}
-                    opacity="0.9"
-                  />
-                </svg>
+                <TierIcon tierKey={data.tier.key} color={data.tier.color} />
               </span>
               <div className="min-w-0">
                 <p className="eyebrow">Your tier</p>

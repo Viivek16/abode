@@ -10,7 +10,7 @@ import {
 } from "@/lib/hooks/useOnboarding";
 
 const BUCKETS: { key: keyof Split; label: string; color: string }[] = [
-  { key: "bills", label: "Bills + Savings", color: "var(--bucket-bills)" },
+  { key: "bills", label: "Bills", color: "var(--bucket-bills)" },
   { key: "invest", label: "Investments", color: "var(--bucket-invest)" },
   { key: "emergency", label: "Emergency", color: "var(--bucket-emergency)" },
   { key: "personal", label: "Personal", color: "var(--bucket-personal)" },

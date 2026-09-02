@@ -33,7 +33,7 @@ export default function MonthSwitcher({
       >
         <Arrow dir="left" />
       </button>
-      <span className="min-w-32 text-center text-sm font-medium text-ink">
+      <span className="min-w-28 text-center text-sm font-medium text-ink sm:min-w-32">
         {ymLabel(ym)}
       </span>
       <button

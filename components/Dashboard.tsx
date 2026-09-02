@@ -60,7 +60,7 @@ export default function Dashboard() {
   const pots = data?.pots ?? [];
   const transfers = data?.transfers ?? [];
 
-  const { earned, spent, buckets } = deriveMonth(quota, income, expenses);
+  const { earned, spent, buckets } = deriveMonth(quota, income, expenses, transfers);
   const moved = sumAmount(transfers);
   const balance = earned - spent - moved;
   const worth = netWorth(pots);
@@ -78,7 +78,7 @@ export default function Dashboard() {
   const sections: ReactNode[] = [
     <NetWorthHero key="hero" value={worth} prevValue={data?.prevNetWorth ?? null} />,
     <StatTrio key="stats" earned={earned} spent={spent} balance={balance} moved={moved} />,
-    <EntriesList key="entries" income={income} expenses={expenses} ym={ym} />,
+    <EntriesList key="entries" income={income} expenses={expenses} transfers={transfers} pots={pots} ym={ym} />,
     <QuotaRings
       key="rings"
       buckets={buckets}

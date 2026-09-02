@@ -1,4 +1,4 @@
-import type { BucketView, ExpenseEntry, IncomeEntry, Pot, QuotaConfig, BucketKey } from "./types";
+import type { BucketView, ExpenseEntry, IncomeEntry, Pot, QuotaConfig, BucketKey, Transfer } from "./types";
 
 // ---- Month helpers ('YYYY-MM') ----
 export const ymOf = (d = new Date()) =>
@@ -50,26 +50,29 @@ export function deltaPct(now: number, prev: number): number | null {
 export const sumAmount = (rows: { amount: number }[]) =>
   rows.reduce((s, r) => s + Number(r.amount), 0);
 
-// Build the four bucket views for the rings + legend.
+// Build the four bucket views for the rings + legend. The ring/legend track how
+// much of each bucket's quota has been *allocated into pots* (moved), which is
+// what the "Allocated this month" card promises — spending is shown elsewhere.
 export function buildBuckets(
   quota: QuotaConfig[],
   expenses: ExpenseEntry[],
+  transfers: Transfer[],
   monthlyIncome: number,
 ): BucketView[] {
   return [...quota]
     .sort((a, b) => a.sort - b.sort)
     .map((q) => {
-      const spent = sumAmount(
-        expenses.filter((e) => e.bucket_key === q.key),
-      );
+      const spent = sumAmount(expenses.filter((e) => e.bucket_key === q.key));
+      const moved = sumAmount(transfers.filter((t) => t.quota_key === q.key));
       const allocated = allocationFor(q.pct, monthlyIncome);
-      const { pct, over } = ringFill(spent, allocated);
+      const { pct, over } = ringFill(moved, allocated);
       return {
         key: q.key as BucketKey,
         name: q.name,
         color: q.color,
         allocated,
         spent,
+        moved,
         fill: pct,
         over,
       };
@@ -88,10 +91,11 @@ export function deriveMonth(
   quota: QuotaConfig[],
   income: IncomeEntry[],
   expenses: ExpenseEntry[],
+  transfers: Transfer[],
 ): MonthDerived {
   const earned = sumAmount(income);
   const spent = sumAmount(expenses);
-  const buckets = buildBuckets(quota, expenses, earned);
+  const buckets = buildBuckets(quota, expenses, transfers, earned);
   return {
     earned,
     spent,

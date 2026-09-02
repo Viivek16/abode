@@ -91,8 +91,8 @@ export default function QuotaRings({
       </div>
       <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:gap-8">
         {/* Rings */}
-        <div className="relative shrink-0" style={{ width: SIZE, height: SIZE }}>
-          <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} aria-hidden>
+        <div className="relative aspect-square w-[248px] max-w-full shrink-0">
+          <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} className="h-full w-full" aria-hidden>
             {buckets.map((b, i) => (
               <Ring
                 key={b.key}
@@ -132,7 +132,7 @@ export default function QuotaRings({
                       )}
                     </span>
                     <span className="tnum shrink-0 text-[11px] text-muted">
-                      {rupee(b.spent)} / {rupee(b.allocated)}
+                      {rupee(b.moved)} / {rupee(b.allocated)}
                     </span>
                   </div>
                   <div className="mt-1.5 h-1.5 overflow-hidden rounded-pill bg-surface-2">

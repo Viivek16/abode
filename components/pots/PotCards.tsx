@@ -2,14 +2,26 @@
 
 import CountUp from "@/components/ui/CountUp";
 import { rupee } from "@/lib/format";
+import { useIsOwner } from "@/lib/hooks/useIsOwner";
 import type { Pot } from "@/lib/types";
 
 export default function PotCards({ pots }: { pots: Pot[] }) {
+  const { data: isOwner } = useIsOwner();
+
+  // The owner's pots mirror a Google Sheet, so every one is shown as-is.
+  // For everyone else, pots *emerge from allocation*: a tile appears only once a
+  // pot has actually received money. The liquid bank always shows — it holds
+  // whatever income has not been allocated yet.
+  const visible = isOwner
+    ? pots
+    : pots.filter((p) => p.is_bank || Number(p.current_balance) > 0);
+  const funded = visible.some((p) => !p.is_bank);
+
   return (
     <section>
       <p className="eyebrow mb-3">Pots</p>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {pots.map((p) => {
+        {visible.map((p) => {
           const color = p.color ?? "var(--muted)";
           return (
             <div
@@ -41,6 +53,11 @@ export default function PotCards({ pots }: { pots: Pot[] }) {
           );
         })}
       </div>
+      {!isOwner && !funded && (
+        <p className="mt-3 text-xs text-faint">
+          Allocate your income to form pots — each destination becomes a tile here.
+        </p>
+      )}
     </section>
   );
 }
