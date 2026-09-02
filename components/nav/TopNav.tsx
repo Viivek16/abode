@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Logo from "@/components/brand/Logo";
 import ProfileButton from "@/components/profile/ProfileButton";
 
 const TABS = [
@@ -18,11 +19,8 @@ export default function TopNav() {
 
   return (
     <header className="mb-5 flex items-center justify-between gap-3">
-      <Link
-        href="/"
-        className="font-display shrink-0 text-lg font-semibold tracking-tight text-ink"
-      >
-        Abode
+      <Link href="/" aria-label="Abode — dashboard" className="tap shrink-0">
+        <Logo size={30} />
       </Link>
 
       <nav className="flex items-center gap-1 rounded-pill bg-surface p-1 ring-1 ring-edge">
