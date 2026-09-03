@@ -99,7 +99,7 @@ export default function Flow({
                     aria-pressed={selected === b.key}
                     title={`${b.name} · ${rupee(b.allocated)}`}
                     onClick={() => onSelect(selected === b.key ? null : b.key)}
-                    className="tap flex min-h-0 flex-col justify-center overflow-hidden rounded-[9px] px-2.5 text-left transition-opacity"
+                    className="tap flex min-h-0 basis-0 flex-col justify-center overflow-hidden rounded-[9px] px-2.5 text-left transition-opacity"
                     style={{ flexGrow: b.allocated, background: b.color, opacity: dim ? 0.4 : 1, ...grow } as CSSProperties}
                   >
                     {showName(b.allocated) && (
@@ -126,14 +126,14 @@ export default function Flow({
                 return (
                   <div
                     key={b.key}
-                    className="flex min-h-0 flex-col gap-px overflow-hidden rounded-[9px] transition-opacity"
+                    className="flex min-h-0 basis-0 flex-col gap-px overflow-hidden rounded-[9px] transition-opacity"
                     style={{ flexGrow: b.allocated, opacity: dim ? 0.4 : 1, ...grow } as CSSProperties}
                   >
                     {slices.map((p, i) => (
                       <div
                         key={i}
                         title={`${p.name} · ${rupee(p.amount)}`}
-                        className="flex min-h-0 items-center overflow-hidden px-2.5"
+                        className="flex min-h-0 basis-0 items-center overflow-hidden px-2.5"
                         style={{ flexGrow: p.amount, background: p.color, ...grow } as CSSProperties}
                       >
                         {showName(p.amount) && (
@@ -151,7 +151,7 @@ export default function Flow({
                       // point of the column, so it's never hidden behind a size gate.
                       <div
                         title={`Unallocated · ${rupee(rem)}`}
-                        className="flex min-h-0 items-center overflow-hidden px-2.5"
+                        className="flex min-h-0 basis-0 items-center overflow-hidden px-2.5"
                         style={{ flexGrow: rem, background: `color-mix(in oklab, ${b.color} 18%, transparent)`, ...grow } as CSSProperties}
                       >
                         <span className="truncate text-[10px] leading-none text-muted">

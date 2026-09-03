@@ -2,7 +2,17 @@
 // Run:  node lib/potInsights.check.mts   (Node strips the TS types natively)
 
 import assert from "node:assert/strict";
-import { potInsights } from "./logic.ts";
+import { cumulativeSavings, potInsights } from "./logic.ts";
+
+// cumulativeSavings: running sum of (income − spent − allocated) up to a month.
+const hist = [
+  { ym: "2026-01", income: 100000, spent: 20000, moved: 80000 },
+  { ym: "2026-02", income: 120000, spent: 30000, moved: 0 },
+];
+assert.equal(cumulativeSavings(hist, "2025-12"), 0); // nothing yet
+assert.equal(cumulativeSavings(hist, "2026-01"), 0); // 100k − 20k − 80k
+assert.equal(cumulativeSavings(hist, "2026-02"), 90000); // + (120k − 30k − 0)
+assert.equal(cumulativeSavings([{ ym: "2026-05", income: 50000, spent: 10000 }], "2026-05"), 40000); // moved defaults to 0
 
 const pot = (o: Record<string, unknown>) =>
   ({ id: "x", key: "x", name: "Pot", bucket_key: null, color: null, icon: null, is_bank: false, current_balance: 0, created_at: "", ...o }) as never;

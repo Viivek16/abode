@@ -68,21 +68,22 @@ function tierSymbol(tierKey: string) {
   }
 }
 
-// A premium coin-style medallion: a tier-coloured aura, the face lit from the
-// top-left with a radial sheen + specular sheen, twin engraved rims, and the
-// emblem embossed in white for real depth.
+// A premium tier crest: a portrait plaque (taller than wide, so it fills the
+// vertical space beside the title) in the tier colour, lit from the top-left
+// with a radial + specular sheen, twin engraved rims, and the emblem embossed
+// in white. The emblem itself stays square — the plaque, not the icon, elongates.
 function TierBadge({ tierKey, color }: { tierKey: string; color: string }) {
   const k = tierKey;
   return (
-    <svg viewBox="0 0 64 64" className="size-16 shrink-0 drop-shadow-[0_7px_14px_rgba(0,0,0,0.5)]" aria-hidden>
+    <svg viewBox="0 0 60 76" className="h-[4.75rem] w-auto shrink-0 drop-shadow-[0_9px_18px_rgba(0,0,0,0.5)]" aria-hidden>
       <defs>
-        <radialGradient id={`tb-face-${k}`} cx="34%" cy="24%" r="86%">
+        <radialGradient id={`tb-face-${k}`} cx="32%" cy="20%" r="92%">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="0.62" />
-          <stop offset="40%" stopColor="#ffffff" stopOpacity="0.06" />
+          <stop offset="42%" stopColor="#ffffff" stopOpacity="0.06" />
           <stop offset="100%" stopColor="#000000" stopOpacity="0.5" />
         </radialGradient>
-        <radialGradient id={`tb-glow-${k}`} cx="50%" cy="50%" r="50%">
-          <stop offset="52%" stopColor={color} stopOpacity="0.55" />
+        <radialGradient id={`tb-glow-${k}`} cx="50%" cy="46%" r="60%">
+          <stop offset="48%" stopColor={color} stopOpacity="0.55" />
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </radialGradient>
         <filter id={`tb-soft-${k}`} x="-60%" y="-60%" width="220%" height="220%">
@@ -93,19 +94,19 @@ function TierBadge({ tierKey, color }: { tierKey: string; color: string }) {
         </filter>
       </defs>
       {/* soft tier-coloured aura */}
-      <circle cx="32" cy="34" r="27" fill={`url(#tb-glow-${k})`} filter={`url(#tb-soft-${k})`} />
-      {/* coin face + top-left sheen */}
-      <circle cx="32" cy="32" r="25" fill={color} />
-      <circle cx="32" cy="32" r="25" fill={`url(#tb-face-${k})`} />
+      <rect x="2" y="4" width="56" height="70" rx="19" fill={`url(#tb-glow-${k})`} filter={`url(#tb-soft-${k})`} />
+      {/* plaque face + top-left sheen */}
+      <rect x="6" y="6" width="48" height="64" rx="16" fill={color} />
+      <rect x="6" y="6" width="48" height="64" rx="16" fill={`url(#tb-face-${k})`} />
       {/* specular highlight, upper-left */}
-      <ellipse cx="24" cy="20" rx="12" ry="7.5" fill="#ffffff" opacity="0.16" filter={`url(#tb-soft-${k})`} />
-      {/* rims: bright outer edge, engraved inner ring */}
-      <circle cx="32" cy="32" r="25" fill="none" stroke="#ffffff" strokeOpacity="0.36" strokeWidth="1" />
-      <circle cx="32" cy="32" r="20.5" fill="none" stroke="#000000" strokeOpacity="0.16" strokeWidth="1" />
-      <circle cx="32" cy="32" r="19" fill="none" stroke="#ffffff" strokeOpacity="0.12" strokeWidth="0.75" />
+      <ellipse cx="23" cy="22" rx="13" ry="8.5" fill="#ffffff" opacity="0.16" filter={`url(#tb-soft-${k})`} />
+      {/* rims: bright outer edge, engraved inner frame */}
+      <rect x="6" y="6" width="48" height="64" rx="16" fill="none" stroke="#ffffff" strokeOpacity="0.36" strokeWidth="1" />
+      <rect x="9.5" y="9.5" width="41" height="57" rx="12.5" fill="none" stroke="#000000" strokeOpacity="0.16" strokeWidth="1" />
+      <rect x="11" y="11" width="38" height="54" rx="11" fill="none" stroke="#ffffff" strokeOpacity="0.12" strokeWidth="0.75" />
       {/* embossed emblem, centred in a 0..24 box */}
       <g
-        transform="translate(20 20)"
+        transform="translate(18 26)"
         stroke="#ffffff"
         strokeWidth="1.9"
         fill="none"
@@ -180,16 +181,16 @@ export default function ProfileView() {
             </div>
           </section>
 
-          {/* Timeline — eyebrow pinned to the top, value to the bottom, so the
-              two tiles stay aligned even when one label wraps to two lines. */}
+          {/* Timeline — both labels are two words (one line), so the tiles are the
+              same height and their values align without any pinning. */}
           <section className="grid grid-cols-2 gap-2">
             {[
               { label: "Member since", value: data.userSince ?? "—" },
-              { label: "Managing finances since", value: data.financeSince ?? "Not yet" },
+              { label: "Tracking since", value: data.financeSince ?? "Not yet" },
             ].map((t) => (
-              <div key={t.label} className="glass flex min-h-[92px] flex-col justify-between p-4">
-                <p className="eyebrow leading-snug">{t.label}</p>
-                <p className="font-display mt-2 text-lg font-semibold text-ink">{t.value}</p>
+              <div key={t.label} className="glass p-4">
+                <p className="eyebrow">{t.label}</p>
+                <p className="font-display mt-1 text-lg font-semibold text-ink">{t.value}</p>
               </div>
             ))}
           </section>

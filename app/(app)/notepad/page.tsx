@@ -1,5 +1,5 @@
-import NotepadView from "@/components/notepad/NotepadView";
+import AppShell from "@/components/AppShell";
 
 export default function Page() {
-  return <NotepadView />;
+  return <AppShell initial="notepad" />;
 }

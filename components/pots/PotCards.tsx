@@ -6,12 +6,6 @@ import { useIsOwner } from "@/lib/hooks/useIsOwner";
 import type { Pot } from "@/lib/types";
 import type { PotInsight } from "@/lib/logic";
 
-const toneClass: Record<PotInsight["tone"], string> = {
-  accent: "text-accent",
-  positive: "text-positive",
-  ink: "text-ink",
-};
-
 const insightValue = (it: PotInsight) =>
   it.currency ? (it.currency.fmt === "rupee" ? rupee(it.currency.n) : compact(it.currency.n)) : it.display;
 
@@ -44,9 +38,7 @@ export default function PotCards({
             {insights.map((it) => (
               <div key={it.key} className="glass lift p-4">
                 <p className="truncate text-[11px] font-medium text-muted">{it.label}</p>
-                <p
-                  className={`font-display mt-1.5 whitespace-nowrap text-[clamp(0.95rem,4.4vw,1.25rem)] font-bold ${toneClass[it.tone]}`}
-                >
+                <p className="font-display mt-1.5 whitespace-nowrap text-[clamp(0.95rem,4.4vw,1.25rem)] font-bold text-ink">
                   {insightValue(it)}
                 </p>
                 <p className="mt-0.5 truncate text-[11px] text-faint">{it.caption}</p>

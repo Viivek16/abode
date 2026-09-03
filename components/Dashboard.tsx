@@ -11,7 +11,6 @@ import IncomeHeatmap from "@/components/heatmap/IncomeHeatmap";
 import PotCards from "@/components/pots/PotCards";
 import MonthSwitcher from "@/components/month-switcher/MonthSwitcher";
 import NotepadStrip from "@/components/notepad/NotepadStrip";
-import TopNav from "@/components/nav/TopNav";
 import QuickAdd from "@/components/quick-add/QuickAdd";
 import AllocateSheet from "@/components/allocate/AllocateSheet";
 import Toast from "@/components/ui/Toast";
@@ -27,10 +26,11 @@ import {
   type NewTransfer,
 } from "@/lib/hooks/useDashboard";
 import { useNeedsOnboarding } from "@/lib/hooks/useOnboarding";
-import { currentYm, deriveMonth, netWorth, potInsights, shiftYm, sumAmount } from "@/lib/logic";
+import { useIsOwner } from "@/lib/hooks/useIsOwner";
+import { currentYm, cumulativeSavings, deriveMonth, netWorth, potInsights, shiftYm, sumAmount } from "@/lib/logic";
 import type { BucketKey } from "@/lib/types";
 
-export default function Dashboard() {
+export default function Dashboard({ active = true }: { active?: boolean }) {
   const router = useRouter();
   const [picked, setPicked] = useState<string | null>(null);
   const [selected, setSelected] = useState<BucketKey | null>(null);
@@ -43,6 +43,7 @@ export default function Dashboard() {
     if (needsOnboarding) router.replace("/onboarding");
   }, [needsOnboarding, router]);
 
+  const { data: isOwner } = useIsOwner();
   const { data: incomeMonths } = useIncomeMonths();
   const { data: monthly } = useMonthlyTotals();
   // Default to the latest month that has income; an explicit pick takes over once made.
@@ -62,7 +63,13 @@ export default function Dashboard() {
   const { earned, spent, buckets } = deriveMonth(quota, income, expenses, transfers);
   const moved = sumAmount(transfers);
   const balance = earned - spent - moved;
-  const worth = netWorth(pots);
+  // The owner's net worth mirrors their sheet (real pot balances). Everyone else
+  // has no balances logged, so we accumulate their monthly savings up to the
+  // displayed month — first month = that month's savings, then it compounds.
+  const worth = isOwner ? netWorth(pots) : cumulativeSavings(monthly ?? [], ym);
+  const prevWorth = isOwner
+    ? data?.prevNetWorth ?? null
+    : cumulativeSavings(monthly ?? [], shiftYm(ym, -1));
   const insights = potInsights({ earned, spent, moved, pots, monthly: monthly ?? [], expenses, buckets });
 
   async function onAdd(e: NewEntry) {
@@ -76,7 +83,7 @@ export default function Dashboard() {
   }
 
   const sections: ReactNode[] = [
-    <NetWorthHero key="hero" value={worth} prevValue={data?.prevNetWorth ?? null} />,
+    <NetWorthHero key="hero" value={worth} prevValue={prevWorth} />,
     <StatTrio key="stats" earned={earned} spent={spent} balance={balance} moved={moved} />,
     <EntriesList key="entries" income={income} expenses={expenses} transfers={transfers} pots={pots} ym={ym} />,
     <QuotaRings
@@ -108,9 +115,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <main className="relative z-10 mx-auto w-full max-w-3xl px-4 pb-28 pt-6">
-      <TopNav />
-
+    <main className="relative z-10 mx-auto w-full max-w-3xl px-4 pb-28 pt-0">
       {/* Month scroller — its own centred row so the top bar stays minimal */}
       <div className="mb-5 flex justify-center">
         <MonthSwitcher ym={ym} onShift={(d) => setPicked(shiftYm(ym, d))} />
@@ -132,17 +137,22 @@ export default function Dashboard() {
         </div>
       )}
 
-      <QuickAdd onAdd={onAdd} />
-      <AllocateSheet
-        open={allocateOpen}
-        onClose={() => setAllocateOpen(false)}
-        ym={ym}
-        buckets={buckets}
-        pots={pots}
-        transfers={transfers}
-        onSave={onAllocate}
-      />
-      <Toast message={toast} onDone={() => setToast(null)} />
+      {/* Viewport-fixed controls belong only to the visible pane. */}
+      {active && (
+        <>
+          <QuickAdd onAdd={onAdd} />
+          <AllocateSheet
+            open={allocateOpen}
+            onClose={() => setAllocateOpen(false)}
+            ym={ym}
+            buckets={buckets}
+            pots={pots}
+            transfers={transfers}
+            onSave={onAllocate}
+          />
+          <Toast message={toast} onDone={() => setToast(null)} />
+        </>
+      )}
     </main>
   );
 }

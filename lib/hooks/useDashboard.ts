@@ -93,27 +93,32 @@ export function useIncomeMonths() {
   });
 }
 
-// Income + spend per month across all history, for the heatmap and its hover.
+// Income, spend and allocated-into-pots per month across all history — the
+// heatmap uses income/spent; the net-worth hero uses all three to accumulate a
+// non-owner's liquid savings month over month.
 export function useMonthlyTotals() {
   return useQuery({
     queryKey: ["monthly-totals"],
     queryFn: async () => {
-      const [inc, exp] = await Promise.all([
+      const [inc, exp, tr] = await Promise.all([
         supabase.from("income_entries").select("ym, amount"),
         supabase.from("expense_entries").select("ym, amount"),
+        supabase.from("transfers").select("ym, amount"),
       ]);
       if (inc.error) throw inc.error;
       if (exp.error) throw exp.error;
-      const m = new Map<string, { income: number; spent: number }>();
-      const bump = (ym: string, k: "income" | "spent", v: number) => {
-        const cur = m.get(ym) ?? { income: 0, spent: 0 };
+      if (tr.error) throw tr.error;
+      const m = new Map<string, { income: number; spent: number; moved: number }>();
+      const bump = (ym: string, k: "income" | "spent" | "moved", v: number) => {
+        const cur = m.get(ym) ?? { income: 0, spent: 0, moved: 0 };
         cur[k] += v;
         m.set(ym, cur);
       };
       for (const r of inc.data ?? []) bump(r.ym as string, "income", Number(r.amount));
       for (const r of exp.data ?? []) bump(r.ym as string, "spent", Number(r.amount));
+      for (const r of tr.data ?? []) bump(r.ym as string, "moved", Number(r.amount));
       return [...m.entries()]
-        .map(([ym, v]) => ({ ym, income: v.income, spent: v.spent }))
+        .map(([ym, v]) => ({ ym, income: v.income, spent: v.spent, moved: v.moved }))
         .sort((a, b) => (a.ym < b.ym ? -1 : 1));
     },
   });
@@ -257,6 +262,7 @@ export function useAddEntry(ym: string) {
       // and the month list, so a backdated entry surfaces when switched to.
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["income-months"] });
+      qc.invalidateQueries({ queryKey: ["monthly-totals"] });
     },
   });
 }
@@ -292,6 +298,7 @@ export function useAddTransfers(ym: string) {
 
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["monthly-totals"] });
     },
   });
 }

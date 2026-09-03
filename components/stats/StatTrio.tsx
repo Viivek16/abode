@@ -15,7 +15,8 @@ function Stat({
   hint?: string;
 }) {
   return (
-    <div className="glass p-4">
+    // These tiles are small; a tighter radius than the card default reads crisper.
+    <div className="glass p-4" style={{ borderRadius: 10 }}>
       <p className="eyebrow">{label}</p>
       <CountUp
         value={value}
@@ -40,7 +41,7 @@ export default function StatTrio({
   moved: number;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
       <Stat label="Income" value={earned} tone="text-ink" />
       <Stat label="Spent" value={spent} tone="text-negative" />
       <Stat label="Savings" value={balance} tone="text-positive" hint="Income − Spent − Allocated" />

@@ -79,6 +79,16 @@ export function buildBuckets(
     });
 }
 
+// Liquid net worth for users without a linked sheet: the running sum of each
+// month's leftover savings (income − spent − allocated) up to `upto` (YYYY-MM).
+export const cumulativeSavings = (
+  monthly: { ym: string; income: number; spent: number; moved?: number }[],
+  upto: string,
+) =>
+  monthly
+    .filter((m) => m.ym <= upto)
+    .reduce((s, m) => s + (m.income - m.spent - (m.moved ?? 0)), 0);
+
 export type MonthDerived = {
   earned: number;
   spent: number;

@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { rupee } from "@/lib/format";
 import { InlineText, InlineAmount, RemoveButton } from "@/components/ui/InlineEdit";
-import TopNav from "@/components/nav/TopNav";
 import {
   useNotepad,
   useSaveNotepad,
@@ -101,7 +100,7 @@ function LineTable({
   );
 }
 
-export default function NotepadView() {
+export default function NotepadView({ active = true }: { active?: boolean }) {
   const { data, isLoading } = useNotepad();
   const save = useSaveNotepad();
   // Every edit pushes a full snapshot onto this stack; undo pops one off. The
@@ -130,7 +129,7 @@ export default function NotepadView() {
 
   if (isLoading || !working) {
     return (
-      <main className="mx-auto w-full max-w-3xl px-4 pb-20 pt-5">
+      <main className="mx-auto w-full max-w-3xl px-4 pb-20 pt-0">
         <p className="text-sm text-faint">Loading…</p>
       </main>
     );
@@ -162,9 +161,7 @@ export default function NotepadView() {
     pushDraft({ ...working, fund_managers: working.fund_managers.filter((_, x) => x !== i) });
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-5">
-      <TopNav />
-
+    <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-0">
       <h1 className="font-display mb-1 text-2xl font-bold text-ink">Notepad</h1>
       <p className="mb-5 text-sm text-muted">
         Tap any underlined name, date or amount to edit it. Tap × to remove a row.
@@ -255,8 +252,8 @@ export default function NotepadView() {
         </Section>
       </div>
 
-      {/* Sticky save bar (only when there are unsaved edits) */}
-      {dirty && (
+      {/* Sticky save bar (only when there are unsaved edits, on the visible pane) */}
+      {active && dirty && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-edge bg-bg/90 px-4 py-3 backdrop-blur-md">
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-2">
             <div className="flex items-center gap-2">
