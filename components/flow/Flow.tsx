@@ -97,6 +97,7 @@ export default function Flow({
                     key={b.key}
                     type="button"
                     aria-pressed={selected === b.key}
+                    title={`${b.name} · ${rupee(b.allocated)}`}
                     onClick={() => onSelect(selected === b.key ? null : b.key)}
                     className="tap flex min-h-0 flex-col justify-center overflow-hidden rounded-[9px] px-2.5 text-left transition-opacity"
                     style={{ flexGrow: b.allocated, background: b.color, opacity: dim ? 0.4 : 1, ...grow } as CSSProperties}
@@ -131,11 +132,12 @@ export default function Flow({
                     {slices.map((p, i) => (
                       <div
                         key={i}
+                        title={`${p.name} · ${rupee(p.amount)}`}
                         className="flex min-h-0 items-center overflow-hidden px-2.5"
                         style={{ flexGrow: p.amount, background: p.color, ...grow } as CSSProperties}
                       >
                         {showName(p.amount) && (
-                          <span className="truncate text-[11px] font-medium text-[#14100E]">
+                          <span className="truncate text-[11px] font-medium leading-none text-[#14100E]">
                             {p.name}
                             {showAmt(p.amount) && (
                               <span className="tnum font-normal text-[#14100E]/70"> · {rupee(p.amount)}</span>
@@ -145,16 +147,16 @@ export default function Flow({
                       </div>
                     ))}
                     {rem > 0 && (
+                      // The remainder always carries its amount — it's the whole
+                      // point of the column, so it's never hidden behind a size gate.
                       <div
+                        title={`Unallocated · ${rupee(rem)}`}
                         className="flex min-h-0 items-center overflow-hidden px-2.5"
-                        style={{ flexGrow: rem, background: `color-mix(in oklab, ${b.color} 14%, transparent)`, ...grow } as CSSProperties}
+                        style={{ flexGrow: rem, background: `color-mix(in oklab, ${b.color} 18%, transparent)`, ...grow } as CSSProperties}
                       >
-                        {showName(rem) && (
-                          <span className="truncate text-[10.5px] text-muted">
-                            Unallocated
-                            {showAmt(rem) && <span className="tnum"> · {rupee(rem)}</span>}
-                          </span>
-                        )}
+                        <span className="truncate text-[10px] leading-none text-muted">
+                          Unallocated<span className="tnum"> · {rupee(rem)}</span>
+                        </span>
                       </div>
                     )}
                   </div>

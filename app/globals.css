@@ -47,9 +47,9 @@
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 
-  /* radii */
-  --r-card: 22px;
-  --r-button: 12px;
+  /* radii — squarer than before reads more premium/architectural */
+  --r-card: 15px;
+  --r-button: 11px;
   --r-pill: 999px;
 }
 
@@ -128,8 +128,8 @@ body::before {
 }
 
 .eyebrow {
-  font-size: 11px;
-  letter-spacing: 0.18em;
+  font-size: 10px;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--muted);
   font-weight: 600;

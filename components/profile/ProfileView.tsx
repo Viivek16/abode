@@ -32,15 +32,17 @@ function Avatar({ src, name }: { src: string | null; name: string }) {
   );
 }
 
-// The engraved symbol per tier, in a 0..24 box (centred by the badge).
+// The engraved emblem per tier, drawn in a 0..24 box (centred by the badge).
+// Each is a single clear metaphor — line-based, geometric, premium.
 function tierSymbol(tierKey: string) {
   switch (tierKey) {
-    case "strategist": // precision — a target
+    case "strategist": // precision — a crosshair on target
       return (
         <>
           <circle cx="12" cy="12" r="8.5" />
-          <circle cx="12" cy="12" r="4" />
-          <circle cx="12" cy="12" r="1.1" fill="#fff" stroke="none" />
+          <circle cx="12" cy="12" r="3.6" />
+          <path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3" />
+          <circle cx="12" cy="12" r="1" fill="#fff" stroke="none" />
         </>
       );
     case "saver": // safety net — a shield with a check
@@ -50,46 +52,60 @@ function tierSymbol(tierKey: string) {
           <path d="M9 12l2.1 2.1L15 10" />
         </>
       );
-    case "spender": // free spirit — a spark
-      return <path d="M12 3l1.9 5.6L19.5 10l-5.6 1.4L12 17l-1.9-5.6L4.5 10l5.6-1.4L12 3z" />;
+    case "spender": // free spirit — a four-point sparkle
+      return (
+        <path d="M12 2.5c.4 4.6 1.9 6.1 6.5 6.5-4.6.4-6.1 1.9-6.5 6.5-.4-4.6-1.9-6.1-6.5-6.5 4.6-.4 6.1-1.9 6.5-6.5z" />
+      );
     case "risk-taker": // energy / risk — a bolt
       return <path d="M13 2.5L5 13.5h5.5L9.5 21.5 19 10.5h-5.5l0.5-8z" />;
-    default: // builder — a stack of blocks
+    default: // builder — a rising trend line, on-brand with Abode's ascent
       return (
         <>
-          <rect x="4" y="13.5" width="16" height="5.5" rx="1.4" />
-          <rect x="6.5" y="8" width="11" height="5" rx="1.4" />
-          <rect x="9" y="2.5" width="6" height="5" rx="1.4" />
+          <path d="M3 16.5L9 11l4 3 7-8" />
+          <path d="M15 6h5v5" />
         </>
       );
   }
 }
 
-// A premium coin-style medallion: the tier colour lit from top-left with a
-// radial sheen and cast shadow for real depth, the symbol embossed in white.
+// A premium coin-style medallion: a tier-coloured aura, the face lit from the
+// top-left with a radial sheen + specular sheen, twin engraved rims, and the
+// emblem embossed in white for real depth.
 function TierBadge({ tierKey, color }: { tierKey: string; color: string }) {
   const k = tierKey;
   return (
-    <svg viewBox="0 0 56 56" className="size-14 shrink-0 drop-shadow-[0_6px_10px_rgba(0,0,0,0.45)]" aria-hidden>
+    <svg viewBox="0 0 64 64" className="size-16 shrink-0 drop-shadow-[0_7px_14px_rgba(0,0,0,0.5)]" aria-hidden>
       <defs>
-        <radialGradient id={`tb-face-${k}`} cx="34%" cy="26%" r="82%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.55" />
-          <stop offset="42%" stopColor="#ffffff" stopOpacity="0.05" />
-          <stop offset="100%" stopColor="#000000" stopOpacity="0.45" />
+        <radialGradient id={`tb-face-${k}`} cx="34%" cy="24%" r="86%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.62" />
+          <stop offset="40%" stopColor="#ffffff" stopOpacity="0.06" />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0.5" />
         </radialGradient>
+        <radialGradient id={`tb-glow-${k}`} cx="50%" cy="50%" r="50%">
+          <stop offset="52%" stopColor={color} stopOpacity="0.55" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </radialGradient>
+        <filter id={`tb-soft-${k}`} x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="3" />
+        </filter>
         <filter id={`tb-emb-${k}`} x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="1" stdDeviation="0.7" floodColor="#000000" floodOpacity="0.45" />
+          <feDropShadow dx="0" dy="1" stdDeviation="0.7" floodColor="#000000" floodOpacity="0.5" />
         </filter>
       </defs>
+      {/* soft tier-coloured aura */}
+      <circle cx="32" cy="34" r="27" fill={`url(#tb-glow-${k})`} filter={`url(#tb-soft-${k})`} />
       {/* coin face + top-left sheen */}
-      <circle cx="28" cy="28" r="25" fill={color} />
-      <circle cx="28" cy="28" r="25" fill={`url(#tb-face-${k})`} />
-      {/* rim: bright top edge, dark inner bevel */}
-      <circle cx="28" cy="28" r="25" fill="none" stroke="#ffffff" strokeOpacity="0.32" strokeWidth="1" />
-      <circle cx="28" cy="28" r="21" fill="none" stroke="#000000" strokeOpacity="0.14" strokeWidth="1" />
-      {/* embossed symbol */}
+      <circle cx="32" cy="32" r="25" fill={color} />
+      <circle cx="32" cy="32" r="25" fill={`url(#tb-face-${k})`} />
+      {/* specular highlight, upper-left */}
+      <ellipse cx="24" cy="20" rx="12" ry="7.5" fill="#ffffff" opacity="0.16" filter={`url(#tb-soft-${k})`} />
+      {/* rims: bright outer edge, engraved inner ring */}
+      <circle cx="32" cy="32" r="25" fill="none" stroke="#ffffff" strokeOpacity="0.36" strokeWidth="1" />
+      <circle cx="32" cy="32" r="20.5" fill="none" stroke="#000000" strokeOpacity="0.16" strokeWidth="1" />
+      <circle cx="32" cy="32" r="19" fill="none" stroke="#ffffff" strokeOpacity="0.12" strokeWidth="0.75" />
+      {/* embossed emblem, centred in a 0..24 box */}
       <g
-        transform="translate(16 16)"
+        transform="translate(20 20)"
         stroke="#ffffff"
         strokeWidth="1.9"
         fill="none"
@@ -128,6 +144,7 @@ function ShareBar({ label, value, income, color }: { label: string; value: numbe
 
 export default function ProfileView() {
   const { data, isLoading } = useProfile();
+  const [showInfo, setShowInfo] = useState(false);
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 pb-20 pt-5">
@@ -157,27 +174,61 @@ export default function ProfileView() {
               <TierBadge tierKey={data.tier.key} color={data.tier.color} />
               <div className="min-w-0">
                 <p className="eyebrow">Your tier</p>
-                <p className="font-display text-xl font-semibold text-ink">{data.tier.name}</p>
-                <p className="mt-0.5 text-sm text-muted">{data.tier.blurb}</p>
+                <p className="font-display mt-0.5 text-[1.7rem] font-semibold leading-none text-ink">{data.tier.name}</p>
+                <p className="mt-1.5 text-sm text-muted">{data.tier.blurb}</p>
               </div>
             </div>
           </section>
 
-          {/* Timeline */}
-          <section className="grid grid-cols-2 gap-3">
-            <div className="glass p-4">
-              <p className="eyebrow">Member since</p>
-              <p className="font-display mt-1.5 text-lg font-semibold text-ink">{data.userSince ?? "—"}</p>
-            </div>
-            <div className="glass p-4">
-              <p className="eyebrow">Managing finances since</p>
-              <p className="font-display mt-1.5 text-lg font-semibold text-ink">{data.financeSince ?? "Not yet"}</p>
-            </div>
+          {/* Timeline — eyebrow pinned to the top, value to the bottom, so the
+              two tiles stay aligned even when one label wraps to two lines. */}
+          <section className="grid grid-cols-2 gap-2">
+            {[
+              { label: "Member since", value: data.userSince ?? "—" },
+              { label: "Managing finances since", value: data.financeSince ?? "Not yet" },
+            ].map((t) => (
+              <div key={t.label} className="glass flex min-h-[92px] flex-col justify-between p-4">
+                <p className="eyebrow leading-snug">{t.label}</p>
+                <p className="font-display mt-2 text-lg font-semibold text-ink">{t.value}</p>
+              </div>
+            ))}
           </section>
 
           {/* Behaviour */}
           <section className="glass p-6">
-            <p className="eyebrow mb-4">How you handle money</p>
+            <div className="mb-4 flex items-center justify-between">
+              <p className="eyebrow">How you handle money</p>
+              <button
+                type="button"
+                onClick={() => setShowInfo((v) => !v)}
+                aria-expanded={showInfo}
+                aria-label="What do these figures mean?"
+                className="tap grid size-6 place-items-center rounded-pill text-muted ring-1 ring-edge transition-colors hover:text-ink hover:ring-edge-strong"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <circle cx="12" cy="12" r="9.2" stroke="currentColor" strokeWidth="1.8" />
+                  <path d="M12 11v5.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  <circle cx="12" cy="7.6" r="1.15" fill="currentColor" />
+                </svg>
+              </button>
+            </div>
+            {showInfo && (
+              <div className="pop-in mb-4 rounded-[12px] bg-surface-2/70 p-3.5 text-xs leading-relaxed text-muted ring-1 ring-edge">
+                <p>
+                  These are your <span className="text-ink">all-time</span> totals — every month you&rsquo;ve
+                  tracked, added together, not just this one.
+                </p>
+                <ul className="mt-2 space-y-1">
+                  <li><span className="text-ink">Invested</span> — income you&rsquo;ve moved into investing.</li>
+                  <li><span className="text-ink">Saved</span> — income set aside rather than spent.</li>
+                  <li><span className="text-ink">Spent</span> — everything logged as an expense.</li>
+                </ul>
+                <p className="mt-2">
+                  Each % is that total as a share of all the income you&rsquo;ve earned. They won&rsquo;t add
+                  up to 100% — the rest is still unallocated or sitting in other pots.
+                </p>
+              </div>
+            )}
             {data.income > 0 ? (
               <div className="space-y-4">
                 <ShareBar label="Invested" value={data.invest} income={data.income} color="var(--bucket-invest)" />
