@@ -27,7 +27,7 @@ import {
   type NewTransfer,
 } from "@/lib/hooks/useDashboard";
 import { useNeedsOnboarding } from "@/lib/hooks/useOnboarding";
-import { currentYm, deriveMonth, netWorth, shiftYm, sumAmount } from "@/lib/logic";
+import { currentYm, deriveMonth, netWorth, potInsights, shiftYm, sumAmount } from "@/lib/logic";
 import type { BucketKey } from "@/lib/types";
 
 export default function Dashboard() {
@@ -63,6 +63,7 @@ export default function Dashboard() {
   const moved = sumAmount(transfers);
   const balance = earned - spent - moved;
   const worth = netWorth(pots);
+  const insights = potInsights({ earned, spent, moved, pots, monthly: monthly ?? [], expenses, buckets });
 
   async function onAdd(e: NewEntry) {
     await addEntry.mutateAsync(e);
@@ -102,7 +103,7 @@ export default function Dashboard() {
       selectedYm={ym}
       onSelect={(m) => setPicked(m)}
     />,
-    <PotCards key="pots" pots={pots} />,
+    <PotCards key="pots" pots={pots} insights={insights} />,
     <NotepadStrip key="notepad" />,
   ];
 
