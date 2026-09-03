@@ -31,7 +31,12 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isPublic = path.startsWith("/login") || path.startsWith("/auth");
+  // API routes authenticate themselves (or run as the cron) — never redirect them.
+  const isPublic =
+    path.startsWith("/login") ||
+    path.startsWith("/auth") ||
+    path.startsWith("/api/cron") ||
+    path.startsWith("/api/push");
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
