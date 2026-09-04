@@ -115,7 +115,7 @@ export default function Dashboard({
   ];
 
   return (
-    <main className="relative z-10 mx-auto w-full max-w-3xl px-4 pb-28 pt-2">
+    <main className="relative z-10 mx-auto w-full max-w-3xl px-4 pb-28 pt-0">
       {isLoading && !data ? (
         <DashboardSkeleton />
       ) : (

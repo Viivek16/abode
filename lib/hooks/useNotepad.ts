@@ -5,13 +5,28 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 
 const supabase = supabaseBrowser();
 
+export type FundManager = {
+  name: string;
+  type: string;
+  platform: string;
+  split: string;
+  amount: number;
+  date: string;
+  maturity: string;
+  returns: string;
+};
+
 export type LineItem = { name: string; date?: string; amount: number };
 export type ChecklistItem = { text: string; done: boolean };
 
+// Checklist ships for everyone; fund_managers + studio are owner-only (the
+// spreadsheet mirror) so they're optional — absent for a fresh public user.
 export type NotepadData = {
   big_buys: { total: number; items: LineItem[] };
   lending: { total: number; items: LineItem[] };
   checklist: ChecklistItem[];
+  fund_managers?: FundManager[];
+  studio?: { total: number; items: LineItem[] };
 };
 
 export const emptyNotepad = (): NotepadData => ({
@@ -26,12 +41,11 @@ const sum = (items: LineItem[]) =>
 // Recompute the section totals so they always match their rows.
 export function withTotals(d: NotepadData): NotepadData {
   return {
-    // Spread first so any legacy keys (a prior fund_managers / studio row) ride
-    // through a save untouched, even though the UI no longer renders them.
     ...d,
     big_buys: { items: d.big_buys.items, total: sum(d.big_buys.items) },
     lending: { items: d.lending.items, total: sum(d.lending.items) },
     checklist: d.checklist ?? [],
+    ...(d.studio ? { studio: { items: d.studio.items, total: sum(d.studio.items) } } : {}),
   };
 }
 

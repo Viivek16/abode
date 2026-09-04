@@ -3,16 +3,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { rupee } from "@/lib/format";
 import { InlineText, InlineAmount, RemoveButton } from "@/components/ui/InlineEdit";
+import { useIsOwner } from "@/lib/hooks/useIsOwner";
 import {
   useNotepad,
   useSaveNotepad,
   withTotals,
   type ChecklistItem,
+  type FundManager,
   type LineItem,
   type NotepadData,
 } from "@/lib/hooks/useNotepad";
 
-type LineSection = "big_buys" | "lending";
+type LineSection = "big_buys" | "lending" | "studio";
 
 function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
@@ -102,6 +104,7 @@ function LineTable({
 
 export default function NotepadView({ active = true }: { active?: boolean }) {
   const { data, isLoading } = useNotepad();
+  const { data: isOwner } = useIsOwner();
   const save = useSaveNotepad();
   // Every edit pushes a full snapshot onto this stack; undo pops one off. The
   // stack is cleared on save/discard and on remount, so undo only ever rewinds
@@ -129,23 +132,24 @@ export default function NotepadView({ active = true }: { active?: boolean }) {
 
   if (isLoading || !working) {
     return (
-      <main className="mx-auto w-full max-w-3xl px-4 pb-20 pt-0">
+      <main className="mx-auto w-full max-w-3xl px-4 pb-10 pt-2">
         <p className="text-sm text-faint">Loading…</p>
       </main>
     );
   }
 
   const live = withTotals(working);
+  const blank = { total: 0, items: [] as LineItem[] };
 
   const setLine = (s: LineSection, i: number, patch: Partial<LineItem>) =>
     pushDraft({
       ...working,
-      [s]: { ...working[s], items: working[s].items.map((it, x) => (x === i ? { ...it, ...patch } : it)) },
+      [s]: { ...(working[s] ?? blank), items: (working[s]?.items ?? []).map((it, x) => (x === i ? { ...it, ...patch } : it)) },
     });
   const addLine = (s: LineSection) =>
-    pushDraft({ ...working, [s]: { ...working[s], items: [...working[s].items, { name: "", date: "", amount: 0 }] } });
+    pushDraft({ ...working, [s]: { ...(working[s] ?? blank), items: [...(working[s]?.items ?? []), { name: "", date: "", amount: 0 }] } });
   const removeLine = (s: LineSection, i: number) =>
-    pushDraft({ ...working, [s]: { ...working[s], items: working[s].items.filter((_, x) => x !== i) } });
+    pushDraft({ ...working, [s]: { ...(working[s] ?? blank), items: (working[s]?.items ?? []).filter((_, x) => x !== i) } });
 
   const setCheck = (i: number, patch: Partial<ChecklistItem>) =>
     pushDraft({ ...working, checklist: working.checklist.map((c, x) => (x === i ? { ...c, ...patch } : c)) });
@@ -154,37 +158,24 @@ export default function NotepadView({ active = true }: { active?: boolean }) {
   const removeCheck = (i: number) =>
     pushDraft({ ...working, checklist: working.checklist.filter((_, x) => x !== i) });
 
+  const setFm = (i: number, patch: Partial<FundManager>) =>
+    pushDraft({ ...working, fund_managers: (working.fund_managers ?? []).map((f, x) => (x === i ? { ...f, ...patch } : f)) });
+  const addFm = () =>
+    pushDraft({
+      ...working,
+      fund_managers: [
+        ...(working.fund_managers ?? []),
+        { name: "", type: "", platform: "", split: "", amount: 0, date: "", maturity: "", returns: "" },
+      ],
+    });
+  const removeFm = (i: number) =>
+    pushDraft({ ...working, fund_managers: (working.fund_managers ?? []).filter((_, x) => x !== i) });
+
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-0">
-      <h1 className="font-display mb-1 text-2xl font-bold text-ink">Notepad</h1>
-      <p className="mb-5 text-sm text-muted">
-        Tap any underlined value to edit it. Check items off, or tap × to remove a row.
-      </p>
-
+    <main className={`mx-auto w-full max-w-3xl px-4 pt-2 ${dirty ? "pb-24" : "pb-10"}`}>
       <div className="space-y-4">
-        {/* Big buys */}
-        <Section title="Big buys" total={live.big_buys.total}>
-          <LineTable
-            items={working.big_buys.items}
-            onSet={(i, p) => setLine("big_buys", i, p)}
-            onRemove={(i) => removeLine("big_buys", i)}
-            addLabel="Add big buy"
-            onAdd={() => addLine("big_buys")}
-          />
-        </Section>
-
-        {/* Lending */}
-        <Section title="Lending" total={live.lending.total}>
-          <LineTable
-            items={working.lending.items}
-            onSet={(i, p) => setLine("lending", i, p)}
-            onRemove={(i) => removeLine("lending", i)}
-            addLabel="Add lending"
-            onAdd={() => addLine("lending")}
-          />
-        </Section>
-
-        {/* Checklist — open-ended reminders / to-dos, checked off when done */}
+        {/* Checklist — open-ended reminders / to-dos, checked off when done.
+            First, because a quick capture is the most common thing to add. */}
         <Section title="Checklist">
           <ul className="divide-y divide-[var(--edge)]">
             {working.checklist.length === 0 && (
@@ -225,6 +216,93 @@ export default function NotepadView({ active = true }: { active?: boolean }) {
             ))}
           </ul>
           <AddButton label="Add item" onClick={addCheck} />
+        </Section>
+
+        {/* Fund managers — owner only (mirrors the spreadsheet). */}
+        {isOwner && (
+          <Section title="Fund managers">
+            <div className="space-y-3">
+              {(working.fund_managers ?? []).length === 0 && (
+                <p className="py-1 text-sm text-faint">No fund managers yet.</p>
+              )}
+              {(working.fund_managers ?? []).map((fm, i) => (
+                <div key={i} className="group rounded-button bg-surface-2 p-4 transition-shadow focus-within:ring-1 focus-within:ring-edge-strong">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <InlineText
+                        value={fm.name}
+                        onCommit={(v) => setFm(i, { name: v })}
+                        placeholder="Name"
+                        grow
+                        className="font-medium text-ink"
+                      />
+                    </div>
+                    <span className="flex items-center gap-2">
+                      <InlineAmount value={fm.amount} onCommit={(n) => setFm(i, { amount: n })} className="text-sm text-accent" />
+                      <RemoveButton onClick={() => removeFm(i)} />
+                    </span>
+                  </div>
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-1 text-xs text-muted">
+                    <InlineText value={fm.type} onCommit={(v) => setFm(i, { type: v })} placeholder="Type" />
+                    <span className="text-faint">·</span>
+                    <InlineText value={fm.platform} onCommit={(v) => setFm(i, { platform: v })} placeholder="Platform" />
+                    <span className="text-faint">·</span>
+                    <InlineText value={fm.split} onCommit={(v) => setFm(i, { split: v })} placeholder="Split" />
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-faint">
+                    <span className="flex items-center gap-1">
+                      Invested
+                      <InlineText value={fm.date} onCommit={(v) => setFm(i, { date: v })} placeholder="date" />
+                    </span>
+                    <span className="flex items-center gap-1">
+                      Matures
+                      <InlineText value={fm.maturity} onCommit={(v) => setFm(i, { maturity: v })} placeholder="date" />
+                    </span>
+                    <span className="flex items-center gap-1">
+                      Returns
+                      <InlineText value={fm.returns} onCommit={(v) => setFm(i, { returns: v })} placeholder="add" />
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <AddButton label="Add fund manager" onClick={addFm} />
+          </Section>
+        )}
+
+        {/* Big buys */}
+        <Section title="Big buys" total={live.big_buys.total}>
+          <LineTable
+            items={working.big_buys.items}
+            onSet={(i, p) => setLine("big_buys", i, p)}
+            onRemove={(i) => removeLine("big_buys", i)}
+            addLabel="Add big buy"
+            onAdd={() => addLine("big_buys")}
+          />
+        </Section>
+
+        {/* Studio setup — owner only. */}
+        {isOwner && (
+          <Section title="Studio setup" total={live.studio?.total ?? 0}>
+            <LineTable
+              items={working.studio?.items ?? []}
+              onSet={(i, p) => setLine("studio", i, p)}
+              onRemove={(i) => removeLine("studio", i)}
+              addLabel="Add studio item"
+              onAdd={() => addLine("studio")}
+            />
+          </Section>
+        )}
+
+        {/* Lending */}
+        <Section title="Lending" total={live.lending.total}>
+          <LineTable
+            items={working.lending.items}
+            onSet={(i, p) => setLine("lending", i, p)}
+            onRemove={(i) => removeLine("lending", i)}
+            addLabel="Add lending"
+            onAdd={() => addLine("lending")}
+          />
         </Section>
       </div>
 
