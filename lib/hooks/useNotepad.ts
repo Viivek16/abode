@@ -5,31 +5,19 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 
 const supabase = supabaseBrowser();
 
-export type FundManager = {
-  name: string;
-  type: string;
-  platform: string;
-  split: string;
-  amount: number;
-  date: string;
-  maturity: string;
-  returns: string;
-};
-
 export type LineItem = { name: string; date?: string; amount: number };
+export type ChecklistItem = { text: string; done: boolean };
 
 export type NotepadData = {
-  fund_managers: FundManager[];
   big_buys: { total: number; items: LineItem[] };
   lending: { total: number; items: LineItem[] };
-  studio: { total: number; items: LineItem[] };
+  checklist: ChecklistItem[];
 };
 
 export const emptyNotepad = (): NotepadData => ({
-  fund_managers: [],
   big_buys: { total: 0, items: [] },
   lending: { total: 0, items: [] },
-  studio: { total: 0, items: [] },
+  checklist: [],
 });
 
 const sum = (items: LineItem[]) =>
@@ -38,10 +26,12 @@ const sum = (items: LineItem[]) =>
 // Recompute the section totals so they always match their rows.
 export function withTotals(d: NotepadData): NotepadData {
   return {
-    fund_managers: d.fund_managers,
+    // Spread first so any legacy keys (a prior fund_managers / studio row) ride
+    // through a save untouched, even though the UI no longer renders them.
+    ...d,
     big_buys: { items: d.big_buys.items, total: sum(d.big_buys.items) },
     lending: { items: d.lending.items, total: sum(d.lending.items) },
-    studio: { items: d.studio.items, total: sum(d.studio.items) },
+    checklist: d.checklist ?? [],
   };
 }
 

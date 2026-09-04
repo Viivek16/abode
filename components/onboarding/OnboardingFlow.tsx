@@ -377,18 +377,18 @@ export default function OnboardingFlow() {
             <span className="font-display tnum text-lg font-semibold text-ink">{rupee(fixedTotal)}</span>
           </div>
 
-          <div className="mt-auto flex gap-2 pt-6">
+          <div className="mt-auto flex gap-3 pt-6">
             <button
               type="button"
               onClick={() => setStep(0)}
-              className="tap h-12 rounded-[10px] px-5 text-sm text-muted ring-1 ring-edge hover:text-ink"
+              className="tap h-11 flex-1 rounded-[10px] text-sm font-medium text-muted ring-1 ring-edge transition-colors hover:text-ink hover:ring-edge-strong"
             >
               Back
             </button>
             <button
               type="button"
               onClick={() => setStep(2)}
-              className="h-12 flex-1 rounded-[10px] bg-accent text-base font-semibold text-[#14100E] shadow-[0_8px_24px_-10px_rgba(205,163,73,0.7)] transition-all hover:brightness-105"
+              className="tap h-11 flex-1 rounded-[10px] bg-accent text-sm font-semibold text-[#14100E] shadow-[0_6px_20px_-10px_rgba(216,172,85,0.6)] transition-all hover:brightness-105"
             >
               Continue
             </button>
@@ -448,18 +448,18 @@ export default function OnboardingFlow() {
             )}
           </div>
 
-          <div className="mt-auto flex gap-2 pt-6">
+          <div className="mt-auto flex gap-3 pt-6">
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="tap h-12 rounded-[10px] px-5 text-sm text-muted ring-1 ring-edge hover:text-ink"
+              className="tap h-11 flex-1 rounded-[10px] text-sm font-medium text-muted ring-1 ring-edge transition-colors hover:text-ink hover:ring-edge-strong"
             >
               Back
             </button>
             <button
               type="button"
               onClick={() => setStep(3)}
-              className="h-12 flex-1 rounded-[10px] bg-accent text-base font-semibold text-[#14100E] shadow-[0_8px_24px_-10px_rgba(205,163,73,0.7)] transition-all hover:brightness-105"
+              className="tap h-11 flex-1 rounded-[10px] bg-accent text-sm font-semibold text-[#14100E] shadow-[0_6px_20px_-10px_rgba(216,172,85,0.6)] transition-all hover:brightness-105"
             >
               Continue
             </button>

@@ -9,8 +9,6 @@ import Flow from "@/components/flow/Flow";
 import EntriesList from "@/components/entries/EntriesList";
 import IncomeHeatmap from "@/components/heatmap/IncomeHeatmap";
 import PotCards from "@/components/pots/PotCards";
-import MonthSwitcher from "@/components/month-switcher/MonthSwitcher";
-import NotepadStrip from "@/components/notepad/NotepadStrip";
 import QuickAdd from "@/components/quick-add/QuickAdd";
 import AllocateSheet from "@/components/allocate/AllocateSheet";
 import Toast from "@/components/ui/Toast";
@@ -19,7 +17,6 @@ import {
   useAddEntry,
   useAddTransfers,
   useDashboardData,
-  useIncomeMonths,
   useMonthlyTotals,
   useRealtime,
   type NewEntry,
@@ -27,12 +24,19 @@ import {
 } from "@/lib/hooks/useDashboard";
 import { useNeedsOnboarding } from "@/lib/hooks/useOnboarding";
 import { useIsOwner } from "@/lib/hooks/useIsOwner";
-import { currentYm, cumulativeSavings, deriveMonth, netWorth, potInsights, shiftYm, sumAmount } from "@/lib/logic";
+import { cumulativeSavings, deriveMonth, netWorth, potInsights, shiftYm, sumAmount } from "@/lib/logic";
 import type { BucketKey } from "@/lib/types";
 
-export default function Dashboard({ active = true }: { active?: boolean }) {
+export default function Dashboard({
+  active = true,
+  ym,
+  onPickMonth,
+}: {
+  active?: boolean;
+  ym: string;
+  onPickMonth: (ym: string) => void;
+}) {
   const router = useRouter();
-  const [picked, setPicked] = useState<string | null>(null);
   const [selected, setSelected] = useState<BucketKey | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [allocateOpen, setAllocateOpen] = useState(false);
@@ -44,10 +48,7 @@ export default function Dashboard({ active = true }: { active?: boolean }) {
   }, [needsOnboarding, router]);
 
   const { data: isOwner } = useIsOwner();
-  const { data: incomeMonths } = useIncomeMonths();
   const { data: monthly } = useMonthlyTotals();
-  // Default to the latest month that has income; an explicit pick takes over once made.
-  const ym = picked ?? incomeMonths?.[incomeMonths.length - 1] ?? currentYm();
 
   const { data, isLoading } = useDashboardData(ym);
   useRealtime(ym);
@@ -108,19 +109,13 @@ export default function Dashboard({ active = true }: { active?: boolean }) {
       key="heat"
       data={monthly ?? []}
       selectedYm={ym}
-      onSelect={(m) => setPicked(m)}
+      onSelect={onPickMonth}
     />,
     <PotCards key="pots" pots={pots} insights={insights} />,
-    <NotepadStrip key="notepad" />,
   ];
 
   return (
-    <main className="relative z-10 mx-auto w-full max-w-3xl px-4 pb-28 pt-0">
-      {/* Month scroller — its own centred row so the top bar stays minimal */}
-      <div className="mb-5 flex justify-center">
-        <MonthSwitcher ym={ym} onShift={(d) => setPicked(shiftYm(ym, d))} />
-      </div>
-
+    <main className="relative z-10 mx-auto w-full max-w-3xl px-4 pb-28 pt-2">
       {isLoading && !data ? (
         <DashboardSkeleton />
       ) : (

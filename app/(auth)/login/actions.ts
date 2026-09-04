@@ -3,31 +3,34 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-export type LoginState = { error?: string };
+export type LoginState = { error?: string; notice?: string };
 
-export async function signIn(
+// Public email/password auth. `mode` (hidden field) picks sign-in vs sign-up;
+// anyone can create an account — each gets their own RLS-isolated dashboard.
+export async function authenticate(
   _prev: LoginState,
   formData: FormData,
 ): Promise<LoginState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  const admin = (process.env.ADMIN_EMAIL ?? "").trim().toLowerCase();
+  const mode = String(formData.get("mode") ?? "signin");
 
   if (!email || !password) return { error: "Enter your email and password." };
-  // Owner-only.
-  if (email !== admin) return { error: "This address is not allowed." };
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
 
-  if (error) return { error: error.message };
-  if ((data.user?.email ?? "").toLowerCase() !== admin) {
-    await supabase.auth.signOut();
-    return { error: "This address is not allowed." };
+  if (mode === "signup") {
+    if (password.length < 6)
+      return { error: "Password must be at least 6 characters." };
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) return { error: error.message };
+    // Email confirmation on → no session yet; point them at their inbox.
+    if (!data.session)
+      return { notice: "Check your email to confirm your account, then sign in." };
+    redirect("/");
   }
 
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return { error: error.message };
   redirect("/");
 }

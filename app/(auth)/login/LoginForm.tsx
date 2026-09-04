@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { signIn, type LoginState } from "./actions";
+import { authenticate, type LoginState } from "./actions";
 
 const initial: LoginState = {};
 
@@ -18,8 +18,10 @@ function GoogleG() {
 }
 
 export default function LoginForm({ notice }: { notice?: string }) {
-  const [state, action, pending] = useActionState(signIn, initial);
+  const [state, action, pending] = useActionState(authenticate, initial);
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [redirecting, setRedirecting] = useState(false);
+  const signup = mode === "signup";
 
   async function google() {
     setRedirecting(true);
@@ -44,18 +46,19 @@ export default function LoginForm({ notice }: { notice?: string }) {
 
       <div className="my-1 flex items-center gap-3">
         <span className="h-px flex-1 bg-edge" />
-        <span className="text-[11px] text-faint">or owner sign-in</span>
+        <span className="text-[11px] text-faint">or with email</span>
         <span className="h-px flex-1 bg-edge" />
       </div>
 
       <form action={action} className="flex flex-col gap-3">
+        <input type="hidden" name="mode" value={mode} />
         <input
           id="email"
           name="email"
           type="email"
           required
           autoComplete="email"
-          aria-label="Owner email"
+          aria-label="Email"
           placeholder="you@example.com"
           className="h-12 rounded-[10px] bg-surface-2 px-4 text-ink placeholder:text-faint outline-none ring-1 ring-edge focus:ring-accent"
         />
@@ -64,28 +67,49 @@ export default function LoginForm({ notice }: { notice?: string }) {
           name="password"
           type="password"
           required
-          autoComplete="current-password"
-          aria-label="Owner password"
-          placeholder="Password"
+          autoComplete={signup ? "new-password" : "current-password"}
+          aria-label="Password"
+          placeholder={signup ? "Create a password" : "Password"}
           className="h-12 rounded-[10px] bg-surface-2 px-4 text-ink placeholder:text-faint outline-none ring-1 ring-edge focus:ring-accent"
         />
         <button
           type="submit"
           disabled={pending}
-          className="tap h-12 rounded-[10px] bg-surface-2 px-4 text-sm font-semibold text-ink ring-1 ring-edge transition-colors hover:ring-edge-strong disabled:opacity-60"
+          className="tap h-12 rounded-[10px] bg-accent px-4 text-sm font-semibold text-[#14100E] shadow-[0_8px_24px_-12px_rgba(216,172,85,0.6)] transition-all hover:brightness-105 disabled:opacity-60"
         >
-          {pending ? "Signing in…" : "Sign in"}
+          {pending
+            ? signup
+              ? "Creating account…"
+              : "Signing in…"
+            : signup
+              ? "Create account"
+              : "Sign in"}
         </button>
       </form>
 
+      <button
+        type="button"
+        onClick={() => setMode(signup ? "signin" : "signup")}
+        className="mt-0.5 text-center text-xs text-muted transition-colors hover:text-ink"
+      >
+        {signup ? (
+          <>Already have an account? <span className="text-accent">Sign in</span></>
+        ) : (
+          <>New here? <span className="text-accent">Create an account</span></>
+        )}
+      </button>
+
+      {state.notice && (
+        <p className="text-sm text-positive" role="status">
+          {state.notice}
+        </p>
+      )}
       {(state.error || notice) && (
         <p className="text-sm text-negative" role="alert">
           {state.error ??
-            (notice === "not_allowed"
-              ? "That address is not allowed."
-              : notice === "auth"
-                ? "Sign-in failed. Try again."
-                : "Session expired. Sign in again.")}
+            (notice === "auth"
+              ? "Sign-in failed. Try again."
+              : "Session expired. Sign in again.")}
         </p>
       )}
     </div>

@@ -7,12 +7,12 @@ import {
   useNotepad,
   useSaveNotepad,
   withTotals,
-  type FundManager,
+  type ChecklistItem,
   type LineItem,
   type NotepadData,
 } from "@/lib/hooks/useNotepad";
 
-type LineSection = "big_buys" | "lending" | "studio";
+type LineSection = "big_buys" | "lending";
 
 function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
@@ -147,77 +147,21 @@ export default function NotepadView({ active = true }: { active?: boolean }) {
   const removeLine = (s: LineSection, i: number) =>
     pushDraft({ ...working, [s]: { ...working[s], items: working[s].items.filter((_, x) => x !== i) } });
 
-  const setFm = (i: number, patch: Partial<FundManager>) =>
-    pushDraft({ ...working, fund_managers: working.fund_managers.map((f, x) => (x === i ? { ...f, ...patch } : f)) });
-  const addFm = () =>
-    pushDraft({
-      ...working,
-      fund_managers: [
-        ...working.fund_managers,
-        { name: "", type: "", platform: "", split: "", amount: 0, date: "", maturity: "", returns: "" },
-      ],
-    });
-  const removeFm = (i: number) =>
-    pushDraft({ ...working, fund_managers: working.fund_managers.filter((_, x) => x !== i) });
+  const setCheck = (i: number, patch: Partial<ChecklistItem>) =>
+    pushDraft({ ...working, checklist: working.checklist.map((c, x) => (x === i ? { ...c, ...patch } : c)) });
+  const addCheck = () =>
+    pushDraft({ ...working, checklist: [...working.checklist, { text: "", done: false }] });
+  const removeCheck = (i: number) =>
+    pushDraft({ ...working, checklist: working.checklist.filter((_, x) => x !== i) });
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-0">
       <h1 className="font-display mb-1 text-2xl font-bold text-ink">Notepad</h1>
       <p className="mb-5 text-sm text-muted">
-        Tap any underlined name, date or amount to edit it. Tap × to remove a row.
+        Tap any underlined value to edit it. Check items off, or tap × to remove a row.
       </p>
 
       <div className="space-y-4">
-        {/* Fund managers */}
-        <Section title="Fund managers">
-          <div className="space-y-3">
-            {working.fund_managers.length === 0 && (
-              <p className="py-1 text-sm text-faint">No fund managers yet.</p>
-            )}
-            {working.fund_managers.map((fm, i) => (
-              <div key={i} className="group rounded-button bg-surface-2 p-4 transition-shadow focus-within:ring-1 focus-within:ring-edge-strong">
-                <div className="flex items-baseline justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <InlineText
-                      value={fm.name}
-                      onCommit={(v) => setFm(i, { name: v })}
-                      placeholder="Name"
-                      grow
-                      className="font-medium text-ink"
-                    />
-                  </div>
-                  <span className="flex items-center gap-2">
-                    <InlineAmount value={fm.amount} onCommit={(n) => setFm(i, { amount: n })} className="text-sm text-accent" />
-                    <RemoveButton onClick={() => removeFm(i)} />
-                  </span>
-                </div>
-                <p className="mt-0.5 flex flex-wrap items-center gap-x-1 text-xs text-muted">
-                  <InlineText value={fm.type} onCommit={(v) => setFm(i, { type: v })} placeholder="Type" />
-                  <span className="text-faint">·</span>
-                  <InlineText value={fm.platform} onCommit={(v) => setFm(i, { platform: v })} placeholder="Platform" />
-                  <span className="text-faint">·</span>
-                  <InlineText value={fm.split} onCommit={(v) => setFm(i, { split: v })} placeholder="Split" />
-                </p>
-                <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-faint">
-                  <span className="flex items-center gap-1">
-                    Invested
-                    <InlineText value={fm.date} onCommit={(v) => setFm(i, { date: v })} placeholder="date" />
-                  </span>
-                  <span className="flex items-center gap-1">
-                    Matures
-                    <InlineText value={fm.maturity} onCommit={(v) => setFm(i, { maturity: v })} placeholder="date" />
-                  </span>
-                  <span className="flex items-center gap-1">
-                    Returns
-                    <InlineText value={fm.returns} onCommit={(v) => setFm(i, { returns: v })} placeholder="add" />
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <AddButton label="Add fund manager" onClick={addFm} />
-        </Section>
-
         {/* Big buys */}
         <Section title="Big buys" total={live.big_buys.total}>
           <LineTable
@@ -226,17 +170,6 @@ export default function NotepadView({ active = true }: { active?: boolean }) {
             onRemove={(i) => removeLine("big_buys", i)}
             addLabel="Add big buy"
             onAdd={() => addLine("big_buys")}
-          />
-        </Section>
-
-        {/* Studio setup */}
-        <Section title="Studio setup" total={live.studio.total}>
-          <LineTable
-            items={working.studio.items}
-            onSet={(i, p) => setLine("studio", i, p)}
-            onRemove={(i) => removeLine("studio", i)}
-            addLabel="Add studio item"
-            onAdd={() => addLine("studio")}
           />
         </Section>
 
@@ -249,6 +182,49 @@ export default function NotepadView({ active = true }: { active?: boolean }) {
             addLabel="Add lending"
             onAdd={() => addLine("lending")}
           />
+        </Section>
+
+        {/* Checklist — open-ended reminders / to-dos, checked off when done */}
+        <Section title="Checklist">
+          <ul className="divide-y divide-[var(--edge)]">
+            {working.checklist.length === 0 && (
+              <li className="py-2 text-sm text-faint">Nothing to track yet.</li>
+            )}
+            {working.checklist.map((c, i) => (
+              <li
+                key={i}
+                className="group -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors focus-within:bg-surface-2/60"
+              >
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={c.done}
+                  aria-label={c.done ? "Mark not done" : "Mark done"}
+                  onClick={() => setCheck(i, { done: !c.done })}
+                  className={`tap grid size-5 shrink-0 place-items-center rounded-[6px] ring-1 transition-colors ${
+                    c.done
+                      ? "bg-accent text-[#14100E] ring-accent"
+                      : "text-transparent ring-edge-strong hover:ring-accent"
+                  }`}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <path d="M5 12l4 4L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                <div className="min-w-0 flex-1">
+                  <InlineText
+                    value={c.text}
+                    onCommit={(v) => setCheck(i, { text: v })}
+                    placeholder="Add a note or reminder"
+                    grow
+                    className={`text-sm ${c.done ? "text-faint line-through" : "text-ink"}`}
+                  />
+                </div>
+                <RemoveButton onClick={() => removeCheck(i)} />
+              </li>
+            ))}
+          </ul>
+          <AddButton label="Add item" onClick={addCheck} />
         </Section>
       </div>
 

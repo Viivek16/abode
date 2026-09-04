@@ -19,14 +19,15 @@ export function RemoveButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-// Tap a value to edit it in place. Read state = plain text with a dotted
-// underline (clearly tappable, works on touch). Edit state is minimal: no filled
-// box, just an accent underline, and the input is sized to its content so it can
-// never spill over neighbouring elements. Commit on blur/Enter, cancel on Esc.
+// Tap a value to edit it in place. Read state = a faint dotted underline that
+// quietly says "tappable". Edit state is a soft honey-tinted field — no hard
+// border box (that read as gimmicky), just a breathable wash with an accent
+// caret — sized to its content so it never spills over neighbours. Commit on
+// blur/Enter, cancel on Esc.
 const READ =
-  "cursor-text rounded-[4px] border-b border-dashed border-edge-strong px-0.5 text-left transition-colors hover:border-accent hover:text-accent-soft";
+  "cursor-text -mx-0.5 rounded-[6px] px-1 text-left underline decoration-dotted decoration-1 decoration-[color:var(--faint)] underline-offset-[5px] transition-colors hover:bg-white/[0.04] hover:text-ink hover:decoration-accent";
 const EDIT =
-  "min-w-0 max-w-full border-b-2 border-accent bg-transparent px-0.5 text-ink outline-none";
+  "min-w-0 max-w-full rounded-[7px] bg-accent/10 px-1.5 text-ink caret-accent outline-none transition-colors focus:outline-none focus-visible:outline-none";
 
 const ch = (s: string, min: number) => `${Math.min(Math.max(s.length, min) + 1, 22)}ch`;
 

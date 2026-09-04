@@ -157,6 +157,17 @@ body::before {
   -webkit-backdrop-filter: blur(22px) saturate(160%);
 }
 
+/* Install / reminder prompt: same glass language, but near-opaque so its text
+   stays fully legible over the busy dashboard it floats above (the low-alpha
+   glass fill let content bleed through and washed the copy out). */
+.glass-prompt {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0) 46%),
+    rgba(26, 20, 17, 0.95);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+}
+
 /* Soft ambient honey glow behind a hero card */
 .ambient {
   position: relative;
@@ -201,6 +212,17 @@ body::before {
   opacity: 0;
   animation: rise 0.66s var(--ease-out) forwards;
   animation-delay: calc(var(--i, 0) * 65ms);
+  will-change: transform, opacity;
+}
+
+/* ---- Top-anchored prompt: slides down from the top edge ---- */
+@keyframes drop {
+  from { opacity: 0; transform: translateY(-16px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+.drop-in {
+  opacity: 0;
+  animation: drop 0.5s var(--ease-out) forwards;
   will-change: transform, opacity;
 }
 
@@ -280,4 +302,5 @@ body::before {
     scroll-behavior: auto !important;
   }
   .reveal { opacity: 1; }
+  .drop-in { opacity: 1; }
 }

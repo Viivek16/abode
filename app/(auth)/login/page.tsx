@@ -16,7 +16,7 @@ export default async function LoginPage({
             Your money, at a glance
           </h1>
           <p className="mt-2.5 mb-6 text-sm text-muted">
-            A private dashboard. Owner access only.
+            Your own private dashboard. Sign in to continue.
           </p>
           <LoginForm notice={error} />
         </div>

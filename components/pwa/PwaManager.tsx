@@ -24,7 +24,16 @@ function urlBase64ToUint8Array(base64: string) {
 const isStandalone = () =>
   window.matchMedia("(display-mode: standalone)").matches ||
   (navigator as unknown as { standalone?: boolean }).standalone === true;
-const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isIos = () =>
+  /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+  // iPadOS 13+ reports a desktop-Safari (Macintosh) UA; a Mac with a touch
+  // screen is really an iPad, so treat it as iOS for the install hint.
+  (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+// Touch-primary, no-hover device = phone/tablet. Excludes laptops/desktops
+// (even touchscreen ones, which report a fine pointer + hover via their trackpad),
+// so the install prompt never shows on a machine you can't install a PWA on.
+const isMobile = () =>
+  window.matchMedia("(pointer: coarse) and (hover: none)").matches;
 const readFlag = (k: string) => {
   try {
     return localStorage.getItem(k);
@@ -55,9 +64,11 @@ export default function PwaManager() {
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
   }, []);
 
-  // Install prompt (skip if already installed or previously dismissed).
+  // Install prompt — mobile only (installing a PWA is a phone/tablet action; on
+  // desktop we leave the browser's own native install affordance). Skip if
+  // already installed or previously dismissed.
   useEffect(() => {
-    if (isStandalone() || readFlag(DISMISS_INSTALL)) return;
+    if (isStandalone() || readFlag(DISMISS_INSTALL) || !isMobile()) return;
     const onPrompt = (e: Event) => {
       e.preventDefault();
       setInstallEvt(e as BeforeInstallPromptEvent);
@@ -146,12 +157,12 @@ export default function PwaManager() {
   const copy = {
     install: { icon: iconDown, title: "Install Abode", desc: "Add it to your home screen for one-tap access, offline-ready." },
     ios: { icon: iconShare, title: "Install Abode", desc: "Tap the Share icon, then “Add to Home Screen.”" },
-    remind: { icon: iconBell, title: "Stay on track", desc: "A gentle nudge on the 1st, 10th, 20th and month-end to keep your budget honest." },
+    remind: { icon: iconBell, title: "Stay on track", desc: "Turn on notifications for timely nudges to keep your budget honest." },
   }[mode];
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[calc(env(safe-area-inset-bottom)+0.9rem)]">
-      <div className="reveal glass glass-2 mx-auto flex max-w-md items-center gap-3 p-4">
+    <div className="fixed inset-x-0 top-[calc(env(safe-area-inset-top)+4.75rem)] z-50 px-4">
+      <div className="drop-in glass glass-2 glass-prompt mx-auto flex max-w-md items-center gap-3 p-4">
         <span className="grid size-10 shrink-0 place-items-center rounded-[12px] bg-accent/15 text-accent">
           {copy.icon}
         </span>

@@ -10,10 +10,10 @@ export const dynamic = "force-dynamic";
 const TZ = "Asia/Kolkata";
 
 export async function GET(req: Request) {
-  // Vercel Cron sends `Authorization: Bearer <CRON_SECRET>` when the env var is
-  // set — require it so the endpoint can't be triggered by anyone.
+  // Vercel Cron sends `Authorization: Bearer <CRON_SECRET>`. Fail closed: with no
+  // secret configured, or a mismatch, reject — the endpoint is never open.
   const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.get("authorization") !== `Bearer ${secret}`)
+  if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`)
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;

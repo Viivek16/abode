@@ -134,9 +134,11 @@ export default function QuickAdd({
           setKind("income");
           setOpen(true);
         }}
-        className="fixed bottom-6 right-6 z-40 grid size-14 place-items-center rounded-pill bg-accent text-3xl font-light leading-none text-[#14100E] shadow-[0_10px_30px_-8px_rgba(205,163,73,0.6)] transition-transform hover:scale-105 active:scale-95"
+        className="fixed bottom-6 right-5 z-40 grid size-12 place-items-center rounded-pill bg-accent text-[#14100E] shadow-[0_8px_22px_-10px_rgba(216,172,85,0.65)] transition-transform hover:scale-105 active:scale-95"
       >
-        +
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+        </svg>
       </button>
 
       {open && (
